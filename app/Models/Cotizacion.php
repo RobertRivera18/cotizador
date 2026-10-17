@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Cotizacion extends Model
 {
@@ -20,21 +21,29 @@ class Cotizacion extends Model
         'telefono',
         'email',
         'estado',
+        'tipo_origen',
+        'total',
     ];
 
     protected $casts = [
         'equipos_json' => 'array',
         'capacidad_recomendada_kva' => 'decimal:2',
         'capacidad_recomendada_kw' => 'decimal:2',
+        'total' => 'decimal:2',
     ];
+
+    public function generador(): BelongsTo
+    {
+        return $this->belongsTo(Generador::class);
+    }
 
     public function entorno(): BelongsTo
     {
         return $this->belongsTo(Entorno::class);
     }
 
-    public function generador(): BelongsTo
+    public function detalles(): HasMany
     {
-        return $this->belongsTo(Generador::class);
+        return $this->hasMany(CotizacionDetalle::class);
     }
 }

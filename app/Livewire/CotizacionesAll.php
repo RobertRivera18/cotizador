@@ -15,7 +15,7 @@ class CotizacionesAll extends Component
 
     public string $search = '';
     public string $filtroEntorno = '';
-    public ?int $cotizacionId = null; // cotización abierta en el detalle
+    public ?int $cotizacionId = null;
 
     public function updatingSearch(): void
     {
@@ -45,16 +45,15 @@ class CotizacionesAll extends Component
             $this->cotizacionId = null;
         }
 
-        $this->dispatch('swal',
+        $this->dispatch(
+            'swal',
             icon: 'success',
             title: '¡Eliminada!',
             text: 'La cotización fue eliminada del sistema.',
         );
     }
 
-    // =========================================================
-    //  DETALLE
-    // =========================================================
+
 
     #[Computed]
     public function cotizacion(): ?Cotizacion
@@ -64,7 +63,6 @@ class CotizacionesAll extends Component
             : null;
     }
 
-    /** Equipos de la cotización, con la potencia unitaria del catálogo. */
     #[Computed]
     public function equiposDetalle(): array
     {
@@ -80,7 +78,7 @@ class CotizacionesAll extends Component
             ->get()
             ->keyBy('id');
 
-        return $items->map(fn ($i) => [
+        return $items->map(fn($i) => [
             'nombre'     => $i['nombre'] ?? '—',
             'cantidad'   => (int) ($i['cantidad'] ?? 0),
             'prioridad'  => $i['prioridad'] ?? null,
@@ -88,7 +86,6 @@ class CotizacionesAll extends Component
         ])->all();
     }
 
-    /** Resumen en texto plano para copiar y pegar al preparar la proforma. */
     #[Computed]
     public function resumenTexto(): string
     {
@@ -127,7 +124,6 @@ class CotizacionesAll extends Component
         return implode("\n", $lineas);
     }
 
-    /** Enlace de WhatsApp con mensaje inicial (asume Ecuador si el número empieza con 0). */
     public function waLink(?string $telefono, ?string $nombre = null): string
     {
         $numero = preg_replace('/\D+/', '', (string) $telefono);
@@ -143,10 +139,6 @@ class CotizacionesAll extends Component
         return "https://wa.me/{$numero}?text=" . rawurlencode($mensaje);
     }
 
-    // =========================================================
-    //  LISTADO
-    // =========================================================
-
     public function render()
     {
         $cotizaciones = Cotizacion::query()
@@ -158,7 +150,7 @@ class CotizacionesAll extends Component
                         ->orWhere('email', 'like', "%{$this->search}%");
                 });
             })
-            ->when($this->filtroEntorno, fn ($q) => $q->where('entorno_id', $this->filtroEntorno))
+            ->when($this->filtroEntorno, fn($q) => $q->where('entorno_id', $this->filtroEntorno))
             ->latest()
             ->paginate(10);
 

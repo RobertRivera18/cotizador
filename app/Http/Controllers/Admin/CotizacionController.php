@@ -10,4 +10,9 @@ class CotizacionController extends Controller
     {
         return view('admin.cotizaciones.index');
     }
+
+    public function create()
+    {
+        return view('admin.cotizaciones.create');
+    }
 }
