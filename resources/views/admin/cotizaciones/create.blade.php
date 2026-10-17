@@ -1,3 +1,3 @@
 <x-admin-layout>
-    Hola
+    @livewire('cotizacion-create')
 </x-admin-layout>
