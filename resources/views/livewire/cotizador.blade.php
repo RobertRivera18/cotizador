@@ -285,10 +285,11 @@
             <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wide mb-3">Modelos Recomendados</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 @forelse ($this->generadoresRecomendados() as $generador)
-                    <div class="border border-gray-200 rounded-xl p-4 flex flex-col items-center text-center hover:border-blue-400 transition-colors">
+                    <div class="border border-gray-200 rounded-xl p-4 flex flex-col items-center text-center hover:border-blue-400 transition-colors"
+                        wire:key="gen-rec-{{ $generador->id }}">
                         <div class="h-24 w-full flex items-center justify-center bg-gray-50 rounded-lg mb-3">
                             @if ($generador->imagen)
-                                <img src="{{ $generador->imagen }}" alt="{{ $generador->nombre }}" class="h-20 object-contain">
+                                <img src="{{ asset('storage/' . $generador->imagen) }}" alt="{{ $generador->nombre }}" class="h-20 object-contain">
                             @else
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7h16M4 7v10a1 1 0 001 1h14a1 1 0 001-1V7M4 7l2-3h12l2 3M9 12h6" />
@@ -299,7 +300,7 @@
                         <p class="text-xs text-gray-500 mt-1">
                             Precio: {{ $generador->precio ? '$'.number_format($generador->precio, 2) : 'Consultar' }}
                         </p>
-                        <button type="button" wire:click="abrirModalCotizacion" wire:click.prevent="$set('generadorSeleccionado', {{ $generador->id }})"
+                        <button type="button" wire:click="abrirModalCotizacion({{ $generador->id }})"
                             class="mt-3 text-xs font-semibold text-blue-600 hover:text-blue-800">
                             Detalles / Cotizar →
                         </button>
@@ -343,44 +344,72 @@
         <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" wire:click.self="cerrarModalCotizacion">
             <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
                 @if ($cotizacionEnviada)
+                    {{-- Éxito: al cerrar se reinicia todo y se vuelve al paso 1 --}}
                     <div class="text-center py-6">
                         <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-green-100 text-green-600 text-2xl mb-3">✓</div>
                         <h3 class="text-lg font-bold text-gray-800">¡Solicitud enviada!</h3>
                         <p class="text-sm text-gray-500 mt-1">Un asesor se pondrá en contacto contigo pronto.</p>
                         <button type="button" wire:click="cerrarModalCotizacion"
-                            class="mt-4 px-5 py-2 bg-gray-800 text-white text-sm font-semibold rounded-lg">Cerrar</button>
+                            class="mt-4 px-5 py-2 bg-gray-800 hover:bg-gray-900 text-white text-sm font-semibold rounded-lg">
+                            Finalizar
+                        </button>
                     </div>
                 @else
                     <h3 class="text-lg font-bold text-gray-800 mb-1">Solicitar cotización</h3>
                     <p class="text-sm text-gray-500 mb-4">Déjanos tus datos y un asesor te contactará con el detalle.</p>
 
-                    <div class="space-y-3">
-                        <div>
-                            <label class="text-xs font-semibold text-gray-500">Nombre</label>
-                            <input type="text" wire:model="nombre_cliente"
-                                class="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                            @error('nombre_cliente') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    {{-- Generador elegido --}}
+                    @if ($this->generadorElegido)
+                        <div class="mb-4 flex items-center gap-3 rounded-lg border border-blue-100 bg-blue-50/50 px-3 py-2.5">
+                            @if ($this->generadorElegido->imagen)
+                                <img src="{{ asset('storage/' . $this->generadorElegido->imagen) }}"
+                                    class="h-10 w-10 rounded-md object-cover border border-blue-100">
+                            @endif
+                            <div class="min-w-0">
+                                <p class="text-[11px] font-semibold uppercase tracking-wide text-blue-600">Modelo seleccionado</p>
+                                <p class="text-sm font-bold text-gray-800 truncate">{{ $this->generadorElegido->nombre }}</p>
+                                <p class="text-xs text-gray-500">
+                                    {{ $this->generadorElegido->capacidad_kva }} kVA · {{ $this->generadorElegido->capacidad_kw }} kW
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <label class="text-xs font-semibold text-gray-500">Teléfono</label>
-                            <input type="text" wire:model="telefono"
-                                class="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                            @error('telefono') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="text-xs font-semibold text-gray-500">Email (opcional)</label>
-                            <input type="email" wire:model="email"
-                                class="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                            @error('email') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
+                    @endif
 
-                    <div class="mt-5 flex justify-end gap-3">
-                        <button type="button" wire:click="cerrarModalCotizacion"
-                            class="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-800">Cancelar</button>
-                        <button type="button" wire:click="enviarCotizacion"
-                            class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg">Enviar</button>
-                    </div>
+                    <form wire:submit="enviarCotizacion">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-xs font-semibold text-gray-500">Nombre</label>
+                                <input type="text" wire:model="nombre_cliente"
+                                    class="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                @error('nombre_cliente') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-500">Teléfono</label>
+                                <input type="text" wire:model="telefono"
+                                    class="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                @error('telefono') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-500">Email (opcional)</label>
+                                <input type="email" wire:model="email"
+                                    class="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                @error('email') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+
+                        <div class="mt-5 flex justify-end gap-3">
+                            <button type="button" wire:click="cerrarModalCotizacion"
+                                class="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-800">Cancelar</button>
+
+                            {{-- Se bloquea mientras se envía para evitar cotizaciones repetidas --}}
+                            <button type="submit"
+                                wire:loading.attr="disabled" wire:target="enviarCotizacion"
+                                class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span wire:loading.remove wire:target="enviarCotizacion">Enviar</span>
+                                <span wire:loading wire:target="enviarCotizacion">Enviando...</span>
+                            </button>
+                        </div>
+                    </form>
                 @endif
             </div>
         </div>

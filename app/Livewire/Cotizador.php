@@ -31,6 +31,7 @@ class Cotizador extends Component
     public string $telefono = '';
     public string $email = '';
     public bool $cotizacionEnviada = false;
+    public ?int $generadorSeleccionado = null;
     protected float $margenSeguridad = 0.25;
     protected float $factorPotencia = 0.8;
 
@@ -217,6 +218,15 @@ class Cotizador extends Component
             ->get();
     }
 
+    /** Generador elegido por el cliente para cotizar (se muestra en el modal). */
+    #[Computed]
+    public function generadorElegido(): ?Generador
+    {
+        return $this->generadorSeleccionado
+            ? Generador::find($this->generadorSeleccionado)
+            : null;
+    }
+
     protected function resetResultado(): void
     {
         unset($this->resultado, $this->generadoresRecomendados);
@@ -257,29 +267,63 @@ class Cotizador extends Component
     //  COTIZACIÓN / CONTACTO
     // =========================================================
 
-    public function abrirModalCotizacion(): void
+    public function abrirModalCotizacion(?int $generadorId = null): void
     {
+        // Si ya se envió una cotización, no se puede reabrir el formulario
+        if ($this->cotizacionEnviada) {
+            return;
+        }
+
+        $this->generadorSeleccionado = $generadorId;
+        $this->resetValidation();
         $this->mostrarModalCotizacion = true;
     }
 
     public function cerrarModalCotizacion(): void
     {
+        // Después de enviar, cerrar el modal reinicia todo y vuelve al inicio
+        if ($this->cotizacionEnviada) {
+            $this->nuevaCotizacion();
+
+            return;
+        }
+
         $this->mostrarModalCotizacion = false;
+        $this->resetValidation();
     }
 
-    public function enviarCotizacion(?int $generadorId = null): void
+    public function enviarCotizacion(): void
     {
+        // Protección 1: si ya se envió, no hacer nada (doble clic, reenvío)
+        if ($this->cotizacionEnviada) {
+            return;
+        }
+
         $this->validate([
             'nombre_cliente' => 'required|string|max:120',
             'telefono' => 'required|string|max:30',
             'email' => 'nullable|email|max:150',
+            'generadorSeleccionado' => 'nullable|exists:generadores,id',
         ]);
+
+        // Protección 2: misma solicitud reciente (por ejemplo, tras recargar la página)
+        $duplicada = Cotizacion::where('telefono', $this->telefono)
+            ->where('entorno_id', $this->entorno_id)
+            ->where('generador_id', $this->generadorSeleccionado)
+            ->where('created_at', '>=', now()->subMinutes(10))
+            ->exists();
+
+        if ($duplicada) {
+            $this->addError('telefono', 'Ya recibimos una solicitud con este teléfono hace pocos minutos. Un asesor te contactará pronto.');
+
+            return;
+        }
 
         $resultado = $this->resultado();
 
         Cotizacion::create([
             'entorno_id' => $this->entorno_id,
-            'generador_id' => $generadorId,
+            'generador_id' => $this->generadorSeleccionado,
             'equipos_json' => $this->equiposActivos()->map(fn(EquipoElectrico $e) => [
                 'id' => $e->id,
                 'nombre' => $e->nombre,
@@ -294,9 +338,32 @@ class Cotizador extends Component
             'email' => $this->email,
         ]);
 
+        // El modal sigue abierto mostrando "¡Solicitud enviada!"
         $this->cotizacionEnviada = true;
-        $this->mostrarModalCotizacion = false;
     }
+
+    /** Limpia todo y regresa al paso 1 para empezar una cotización nueva. */
+    public function nuevaCotizacion(): void
+    {
+        $this->reset([
+            'step',
+            'entorno_id',
+            'equipos',
+            'busquedaEquipo',
+            'prioridades',
+            'filtroCombustible',
+            'mostrarModalCotizacion',
+            'nombre_cliente',
+            'telefono',
+            'email',
+            'cotizacionEnviada',
+            'generadorSeleccionado',
+        ]);
+
+        $this->resetValidation();
+        $this->mount();
+    }
+
     public function render()
     {
         return view('livewire.cotizador')->layout('layouts.app');
