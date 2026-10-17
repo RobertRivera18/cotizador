@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Livewire;
 
 use App\Models\Cotizacion;
@@ -53,13 +52,11 @@ class CotizacionesAll extends Component
         );
     }
 
-
-
     #[Computed]
     public function cotizacion(): ?Cotizacion
     {
         return $this->cotizacionId
-            ? Cotizacion::with(['entorno', 'generador'])->find($this->cotizacionId)
+            ? Cotizacion::with(['entorno', 'generador', 'detalles.generador'])->find($this->cotizacionId)
             : null;
     }
 
@@ -68,7 +65,7 @@ class CotizacionesAll extends Component
     {
         $c = $this->cotizacion;
 
-        if (! $c) {
+        if (! $c || empty($c->equipos_json)) {
             return [];
         }
 
@@ -101,24 +98,42 @@ class CotizacionesAll extends Component
             "Cliente: {$c->nombre_cliente}",
             "Teléfono: {$c->telefono}",
             'Email: ' . ($c->email ?: '—'),
-            'Entorno: ' . ($c->entorno?->nombre ?? '—'),
+            'Origen: ' . strtoupper($c->tipo_origen ?? 'web'),
             '',
-            "Potencia total: {$c->potencia_total_w} W",
-            "Capacidad recomendada: {$c->capacidad_recomendada_kva} kVA / {$c->capacidad_recomendada_kw} kW",
-            'Modelo elegido: ' . ($c->generador?->nombre ?? 'Sin modelo (consulta general)'),
-            '',
-            'Equipos:',
         ];
 
-        foreach ($this->equiposDetalle as $e) {
-            $linea = "- {$e['cantidad']} x {$e['nombre']}";
-            if ($e['potencia_w']) {
-                $linea .= " ({$e['potencia_w']} W)";
+        // Si es una cotización manual con tabla de detalles
+        if ($c->detalles && $c->detalles->count() > 0) {
+            $lineas[] = 'Ítems cotizados:';
+            foreach ($c->detalles as $d) {
+                $lineas[] = "- {$d->cantidad} x {$d->descripcion} ($" . number_format($d->precio_unitario, 2) . ") = $" . number_format($d->subtotal, 2);
             }
-            if ($e['prioridad']) {
-                $linea .= ' [' . ucfirst($e['prioridad']) . ']';
+            $subtotal = $c->detalles->sum('subtotal');
+            $iva = $subtotal * 0.15;
+            $total = $subtotal + $iva;
+            $lineas[] = '';
+            $lineas[] = "Subtotal: $" . number_format($subtotal, 2);
+            $lineas[] = "IVA (15%): $" . number_format($iva, 2);
+            $lineas[] = "TOTAL: $" . number_format($total, 2);
+        } else {
+            // Si es una cotización automática de la web
+            $lineas[] = 'Entorno: ' . ($c->entorno?->nombre ?? '—');
+            $lineas[] = "Potencia total: {$c->potencia_total_w} W";
+            $lineas[] = "Capacidad recomendada: {$c->capacidad_recomendada_kva} kVA / {$c->capacidad_recomendada_kw} kW";
+            $lineas[] = 'Modelo elegido: ' . ($c->generador?->nombre ?? 'Sin modelo (consulta general)');
+            $lineas[] = '';
+            $lineas[] = 'Equipos a respaldar:';
+
+            foreach ($this->equiposDetalle as $e) {
+                $linea = "- {$e['cantidad']} x {$e['nombre']}";
+                if ($e['potencia_w']) {
+                    $linea .= " ({$e['potencia_w']} W)";
+                }
+                if ($e['prioridad']) {
+                    $linea .= ' [' . ucfirst($e['prioridad']) . ']';
+                }
+                $lineas[] = $linea;
             }
-            $lineas[] = $linea;
         }
 
         return implode("\n", $lineas);
@@ -142,7 +157,7 @@ class CotizacionesAll extends Component
     public function render()
     {
         $cotizaciones = Cotizacion::query()
-            ->with(['entorno', 'generador'])
+            ->with(['entorno', 'generador', 'detalles'])
             ->when($this->search, function ($q) {
                 $q->where(function ($q) {
                     $q->where('nombre_cliente', 'like', "%{$this->search}%")
