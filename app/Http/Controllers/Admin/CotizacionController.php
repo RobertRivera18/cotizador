@@ -19,9 +19,9 @@ class CotizacionController extends Controller
     }
 
     public function edit(Cotizacion $cotizacion)
-    {
-        return view('admin.cotizaciones.edit');
-    }
+{
+    return view('admin.cotizaciones.edit', compact('cotizacion'));
+}
     public function descargarPdf($id)
     {
         $cotizacion = Cotizacion::with(['detalles', 'entorno'])->findOrFail($id);

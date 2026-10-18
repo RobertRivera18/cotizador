@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Livewire;
 
 use App\Models\Cotizacion;
@@ -10,25 +11,20 @@ use Illuminate\Support\Facades\DB;
 
 class CotizacionCreate extends Component
 {
-    // Datos del Cliente
     public $nombre_cliente = '';
     public $telefono = '';
     public $email = '';
-    public $entorno_id = null; // Opcional por si quieres clasificar el entorno
-
-    // Catálogos para selectores
+    public $cedula_ruc = '';
+    public $entorno_id = null;
     public $generadores = [];
     public $entornos = [];
 
-    // Detalle dinámico
     public $items = [];
 
     public function mount()
     {
         $this->generadores = Generador::where('activo', true)->get();
         $this->entornos = Entorno::all();
-
-        // Inicializamos con una fila vacía por defecto
         $this->agregarFila();
     }
 
@@ -46,13 +42,11 @@ class CotizacionCreate extends Component
     public function eliminarFila($index)
     {
         unset($this->items[$index]);
-        $this->items = array_values($this->items); // Reindexar el array
+        $this->items = array_values($this->items);
     }
 
-    // Al seleccionar un generador, se llena automáticamente la descripción y el precio
     public function updatedItems($value, $key)
     {
-        // Se activa cuando cambia algún campo de items (ej. "0.generador_id")
         $parts = explode('.', $key);
         if (count($parts) === 2) {
             $index = $parts[0];
@@ -66,14 +60,12 @@ class CotizacionCreate extends Component
                 }
             }
 
-            // Recalcular subtotal de la fila
             $cant = (float) ($this->items[$index]['cantidad'] ?? 0);
             $precio = (float) ($this->items[$index]['precio_unitario'] ?? 0);
             $this->items[$index]['subtotal'] = round($cant * $precio, 2);
         }
     }
 
-    // Propiedad computada para obtener el total general
     public function getTotalProperty()
     {
         return array_reduce($this->items, function ($carry, $item) {
@@ -87,6 +79,7 @@ class CotizacionCreate extends Component
             'nombre_cliente'          => 'required|string|max:255',
             'telefono'                => 'nullable|string|max:50',
             'email'                   => 'nullable|email|max:255',
+            'cedula_ruc'                => 'nullable|digits_between:10,13',
             'entorno_id'              => 'nullable|exists:entornos,id',
             'items'                   => 'required|array|min:1',
             'items.*.descripcion'     => 'required|string|max:255',
@@ -101,18 +94,17 @@ class CotizacionCreate extends Component
         ]);
 
         DB::transaction(function () {
-            // Guardar cabecera (los campos calculados como equipos_json, potencias, etc. quedan NULL)
             $cotizacion = Cotizacion::create([
                 'nombre_cliente' => $this->nombre_cliente,
                 'telefono'       => $this->telefono,
                 'email'          => $this->email,
+                'cedula_ruc'     => $this->cedula_ruc,
                 'entorno_id'     => $this->entorno_id ?: null,
                 'tipo_origen'    => 'manual',
                 'estado'         => 'pendiente',
                 'total'          => $this->total,
             ]);
 
-            // Guardar detalle
             foreach ($this->items as $item) {
                 CotizacionDetalle::create([
                     'cotizacion_id'   => $cotizacion->id,

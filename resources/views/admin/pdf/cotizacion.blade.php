@@ -4,6 +4,16 @@
         ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
         : null;
 
+    // Logos de los bancos en base64 para evitar errores de renderizado en DomPDF
+    $pichinchaPath = public_path('img/logoPichincha.jpg');
+    $pichinchaSrc = file_exists($pichinchaPath) ? 'data:image/jpg;base64,' . base64_encode(file_get_contents($pichinchaPath)) : null;
+
+    $guayaquilPath = public_path('img/logoGuayaquil.png');
+    $guayaquilSrc = file_exists($guayaquilPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($guayaquilPath)) : null;
+
+    $pacificoPath = public_path('img/logoPacifico.png');
+    $pacificoSrc = file_exists($pacificoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($pacificoPath)) : null;
+
     $subtotal = $cotizacion->detalles->sum('subtotal');
     $iva = $subtotal * 0.15;
     $totalGeneral = $subtotal + $iva;
@@ -77,7 +87,7 @@
         }
         .items td.num { color: #b45309; }
         .items td.money { color: #1e3a8a; text-align: right; }
-        .items .prod { text-transform: uppercase; }
+        .items .prod { text-transform: uppercase; text-align: left; }
 
         /* ===== TOTALES ===== */
         .totals-wrap { width: 100%; }
@@ -108,8 +118,8 @@
         }
         .bank-info { text-align: center; font-size: 9px; margin: 6px 0 10px 0; }
         .accounts { width: 100%; }
-        .accounts td { padding: 8px 4px; vertical-align: middle; }
-        .accounts .bank { width: 40%; font-weight: bold; font-size: 12px; }
+        .accounts td { padding: 6px 4px; vertical-align: middle; }
+        .accounts .bank { width: 45%; font-weight: bold; font-size: 11px; }
         .accounts .acc { font-size: 11px; color: #1e3a8a; }
         .pichincha { color: #b8860b; }
         .guayaquil { color: #c2185b; }
@@ -156,7 +166,7 @@
         </tr>
         <tr>
             <td class="lbl">RUC:</td>
-            <td class="val">{{ $cotizacion->ruc ?? '' }}</td>
+            <td class="val">{{ $cotizacion->cedula_ruc ?? '' }}</td>
             <td class="lbl">TELÉFONO:</td>
             <td class="val">(04) 3916000</td>
         </tr>
@@ -180,7 +190,6 @@
             <tr>
                 <th style="width: 4%;">#</th>
                 <th style="width: 7%;">Cant</th>
-                <th style="width: 13%;">Medida</th>
                 <th style="width: 48%;">Producto</th>
                 <th style="width: 14%;">Precio U.</th>
                 <th style="width: 14%;">Total</th>
@@ -191,7 +200,6 @@
                 <tr>
                     <td class="num">{{ $i + 1 }}</td>
                     <td class="num">{{ $d->cantidad }}</td>
-                    <td>UNIDAD</td>
                     <td class="prod">{{ $d->descripcion }}</td>
                     <td class="money">$ &nbsp;&nbsp;&nbsp; {{ number_format($d->precio_unitario, 2) }}</td>
                     <td class="money">$ &nbsp;&nbsp;&nbsp; {{ number_format($d->subtotal, 2) }}</td>
@@ -255,15 +263,30 @@
 
     <table class="accounts">
         <tr>
-            <td class="bank pichincha">BANCO PICHINCHA</td>
+            <td class="bank pichincha">
+                @if($pichinchaSrc)
+                    <img src="{{ $pichinchaSrc }}" alt="Banco Pichincha" style="height: 25px; vertical-align: middle; margin-right: 6px;">
+                @endif
+                BANCO PICHINCHA
+            </td>
             <td class="acc">CUENTA CORRIENTE #2100082843</td>
         </tr>
         <tr>
-            <td class="bank guayaquil">Banco Guayaquil</td>
+            <td class="bank guayaquil">
+                @if($guayaquilSrc)
+                    <img src="{{ $guayaquilSrc }}" alt="Banco Guayaquil" style="height: 25px; vertical-align: middle; margin-right: 6px;">
+                @endif
+                Banco Guayaquil
+            </td>
             <td class="acc">CUENTA CORRIENTE #0019140334</td>
         </tr>
         <tr>
-            <td class="bank pacifico">Banco del Pacífico</td>
+            <td class="bank pacifico">
+                @if($pacificoSrc)
+                    <img src="{{ $pacificoSrc }}" alt="Banco del Pacífico" style="height: 25px; vertical-align: middle; margin-right: 6px;">
+                @endif
+                Banco del Pacífico
+            </td>
             <td class="acc">CUENTA CORRIENTE #0008080372</td>
         </tr>
     </table>

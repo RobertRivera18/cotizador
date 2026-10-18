@@ -9,6 +9,7 @@ use App\Models\EquipoElectrico;
 use App\Models\Generador;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
+use Illuminate\Support\Facades\DB;
 
 
 class Cotizador extends Component
@@ -294,7 +295,6 @@ class Cotizador extends Component
 
     public function enviarCotizacion(): void
     {
-        // Protección 1: si ya se envió, no hacer nada (doble clic, reenvío)
         if ($this->cotizacionEnviada) {
             return;
         }
@@ -306,7 +306,6 @@ class Cotizador extends Component
             'generadorSeleccionado' => 'nullable|exists:generadores,id',
         ]);
 
-        // Protección 2: misma solicitud reciente (por ejemplo, tras recargar la página)
         $duplicada = Cotizacion::where('telefono', $this->telefono)
             ->where('entorno_id', $this->entorno_id)
             ->where('generador_id', $this->generadorSeleccionado)
@@ -319,28 +318,50 @@ class Cotizador extends Component
             return;
         }
 
-        $resultado = $this->resultado();
+                $resultado = $this->resultado();
 
-        Cotizacion::create([
-            'entorno_id' => $this->entorno_id,
-            'generador_id' => $this->generadorSeleccionado,
-            'equipos_json' => $this->equiposActivos()->map(fn(EquipoElectrico $e) => [
-                'id' => $e->id,
-                'nombre' => $e->nombre,
-                'cantidad' => $e->cantidad_seleccionada,
-                'prioridad' => $this->prioridades[$e->id] ?? null,
-            ])->values()->toArray(),
-            'potencia_total_w' => $resultado['potencia_total_w'],
-            'capacidad_recomendada_kva' => $resultado['capacidad_kva'],
-            'capacidad_recomendada_kw' => $resultado['capacidad_kw'],
-            'nombre_cliente' => $this->nombre_cliente,
-            'telefono' => $this->telefono,
-            'email' => $this->email,
-        ]);
+        $generador = $this->generadorSeleccionado
+            ? Generador::find($this->generadorSeleccionado)
+            : null;
 
-        // El modal sigue abierto mostrando "¡Solicitud enviada!"
+        DB::transaction(function () use ($resultado, $generador) {
+            $cotizacion = Cotizacion::create([
+                'entorno_id'                => $this->entorno_id,
+                'generador_id'              => $generador?->id,
+                'equipos_json'              => $this->equiposActivos()->map(fn(EquipoElectrico $e) => [
+                    'id'        => $e->id,
+                    'nombre'    => $e->nombre,
+                    'cantidad'  => $e->cantidad_seleccionada,
+                    'prioridad' => $this->prioridades[$e->id] ?? null,
+                ])->values()->toArray(),
+                'potencia_total_w'          => $resultado['potencia_total_w'],
+                'capacidad_recomendada_kva' => $resultado['capacidad_kva'],
+                'capacidad_recomendada_kw'  => $resultado['capacidad_kw'],
+                'nombre_cliente'            => $this->nombre_cliente,
+                'telefono'                  => $this->telefono,
+                'email'                     => $this->email,
+                'tipo_origen'               => 'web',
+                'estado'                    => 'pendiente',
+                'total'                     => $generador?->precio ?? 0,
+            ]);
+
+            if ($generador) {
+                $precio = (float) ($generador->precio ?? 0);
+
+                $cotizacion->detalles()->create([
+                    'generador_id'    => $generador->id,
+                    'descripcion'     => $generador->nombre ?? $generador->modelo,
+                    'cantidad'        => 1,
+                    'precio_unitario' => $precio,
+                    'subtotal'        => $precio,
+                ]);
+            }
+        });
+
         $this->cotizacionEnviada = true;
+        $this->dispatch('cotizacion-enviada', nombre: $this->nombre_cliente);
     }
+
 
     /** Limpia todo y regresa al paso 1 para empezar una cotización nueva. */
     public function nuevaCotizacion(): void

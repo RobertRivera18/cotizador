@@ -102,21 +102,8 @@ class CotizacionesAll extends Component
             '',
         ];
 
-        // Si es una cotización manual con tabla de detalles
-        if ($c->detalles && $c->detalles->count() > 0) {
-            $lineas[] = 'Ítems cotizados:';
-            foreach ($c->detalles as $d) {
-                $lineas[] = "- {$d->cantidad} x {$d->descripcion} ($" . number_format($d->precio_unitario, 2) . ") = $" . number_format($d->subtotal, 2);
-            }
-            $subtotal = $c->detalles->sum('subtotal');
-            $iva = $subtotal * 0.15;
-            $total = $subtotal + $iva;
-            $lineas[] = '';
-            $lineas[] = "Subtotal: $" . number_format($subtotal, 2);
-            $lineas[] = "IVA (15%): $" . number_format($iva, 2);
-            $lineas[] = "TOTAL: $" . number_format($total, 2);
-        } else {
-            // Si es una cotización automática de la web
+        // Cotización web: siempre se muestra el cálculo y los equipos a respaldar
+        if (($c->tipo_origen ?? 'web') !== 'manual') {
             $lineas[] = 'Entorno: ' . ($c->entorno?->nombre ?? '—');
             $lineas[] = "Potencia total: {$c->potencia_total_w} W";
             $lineas[] = "Capacidad recomendada: {$c->capacidad_recomendada_kva} kVA / {$c->capacidad_recomendada_kw} kW";
@@ -134,6 +121,22 @@ class CotizacionesAll extends Component
                 }
                 $lineas[] = $linea;
             }
+            $lineas[] = '';
+        }
+
+        // Ítems cotizados (manual, o web con generador / servicios agregados)
+        if ($c->detalles && $c->detalles->count() > 0) {
+            $lineas[] = 'Ítems cotizados:';
+            foreach ($c->detalles as $d) {
+                $lineas[] = "- {$d->cantidad} x {$d->descripcion} ($" . number_format($d->precio_unitario, 2) . ") = $" . number_format($d->subtotal, 2);
+            }
+            $subtotal = $c->detalles->sum('subtotal');
+            $iva = $subtotal * 0.15;
+            $total = $subtotal + $iva;
+            $lineas[] = '';
+            $lineas[] = "Subtotal: $" . number_format($subtotal, 2);
+            $lineas[] = "IVA (15%): $" . number_format($iva, 2);
+            $lineas[] = "TOTAL: $" . number_format($total, 2);
         }
 
         return implode("\n", $lineas);

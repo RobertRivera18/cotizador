@@ -1,4 +1,30 @@
 <div class="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-sm border border-gray-100" wire:loading.class="opacity-60">
+    <div x-data="{ show: false, nombre: '', timer: null }"
+        x-on:cotizacion-enviada.window="
+            nombre = $event.detail.nombre ?? '';
+            show = true;
+            clearTimeout(timer);
+            timer = setTimeout(() => show = false, 8000);
+        "
+        x-show="show"
+        x-transition.opacity.duration.300ms
+        style="display: none;"
+        role="status" aria-live="polite"
+        class="fixed top-4 right-4 z-[60] w-[calc(100%-2rem)] max-w-sm bg-white border border-emerald-100 rounded-xl shadow-lg p-4 flex items-start gap-3">
+        <span class="h-8 w-8 rounded-full bg-emerald-50 text-emerald-600 inline-flex items-center justify-center flex-shrink-0 font-bold">✓</span>
+        <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-gray-900">¡Solicitud enviada!</p>
+            <p class="text-xs text-gray-500 mt-0.5">
+                Gracias<span x-show="nombre">, <span class="font-medium text-gray-700" x-text="nombre"></span></span>.
+                Recibimos tu solicitud y estamos preparando tu cotización. Un asesor te contactará pronto.
+            </p>
+        </div>
+        <button type="button" x-on:click="show = false" class="text-gray-400 hover:text-gray-600" aria-label="Cerrar">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
 
     {{-- ================= STEPPER SUPERIOR ================= --}}
     <div class="flex items-center justify-between mb-8">
@@ -348,7 +374,10 @@
                     <div class="text-center py-6">
                         <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-green-100 text-green-600 text-2xl mb-3">✓</div>
                         <h3 class="text-lg font-bold text-gray-800">¡Solicitud enviada!</h3>
-                        <p class="text-sm text-gray-500 mt-1">Un asesor se pondrá en contacto contigo pronto.</p>
+                        <p class="text-sm text-gray-500 mt-1">
+                            Recibimos tus datos{{ $nombre_cliente ? ', ' . $nombre_cliente : '' }}. Estamos preparando tu cotización
+                            y un asesor se pondrá en contacto contigo pronto.
+                        </p>
                         <button type="button" wire:click="cerrarModalCotizacion"
                             class="mt-4 px-5 py-2 bg-gray-800 hover:bg-gray-900 text-white text-sm font-semibold rounded-lg">
                             Finalizar

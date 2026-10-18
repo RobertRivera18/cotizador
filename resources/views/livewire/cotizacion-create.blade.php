@@ -14,20 +14,26 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
             <div>
                 <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Nombre del Cliente *</label>
-                <input type="text" wire:model="nombre_cliente" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Ej: Juan Pérez / Empresa S.A.">
+                <input type="text" maxlength="255" wire:model.blur="nombre_cliente" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Ej: Juan Pérez / Empresa S.A.">
                 @error('nombre_cliente') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
             </div>
 
             <div>
                 <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Teléfono</label>
-                <input type="text" wire:model="telefono" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Ej: +593 999 999 999">
+                <input type="text" maxlength="50" inputmode="tel" wire:model.blur="telefono" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Ej: +593 999 999 999">
                 @error('telefono') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
             </div>
 
             <div>
                 <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Email</label>
-                <input type="email" wire:model="email" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="cliente@correo.com">
+                <input type="email" maxlength="255" wire:model.blur="email" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="cliente@correo.com">
                 @error('email') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Cédula/RUC</label>
+                <input type="text" inputmode="numeric" maxlength="13" wire:model.blur="cedula_ruc" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="10 dígitos (cédula) o 13 (RUC)">
+                @error('cedula_ruc') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
             </div>
 
             <div class="md:col-span-1">
@@ -38,6 +44,7 @@
                         <option value="{{ $entorno->id }}">{{ $entorno->nombre }}</option>
                     @endforeach
                 </select>
+                @error('entorno_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
             </div>
         </div>
 
@@ -64,8 +71,9 @@
                     </thead>
                     <tbody class="divide-y divide-gray-200">
                         @foreach($items as $index => $item)
-                            <tr>
+                            <tr wire:key="item-{{ $index }}">
                                 <td class="p-2">
+                                    {{-- El select sí es .live: elegir un equipo rellena descripción y precio --}}
                                     <select wire:model.live="items.{{ $index }}.generador_id" class="w-full text-xs border-gray-300 rounded-md">
                                         <option value="">Personalizado / Otro</option>
                                         @foreach($generadores as $gen)
@@ -74,14 +82,16 @@
                                     </select>
                                 </td>
                                 <td class="p-2">
-                                    <input type="text" wire:model.live="items.{{ $index }}.descripcion" placeholder="Ej: Generador Diésel 20kVA + Tablero ATS" class="w-full text-xs border-gray-300 rounded-md">
+                                    <input type="text" maxlength="255" wire:model.blur="items.{{ $index }}.descripcion" placeholder="Ej: Generador Diésel 20kVA + Tablero ATS" class="w-full text-xs border-gray-300 rounded-md">
                                     @error("items.$index.descripcion") <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
                                 </td>
                                 <td class="p-2">
-                                    <input type="number" min="1" wire:model.live="items.{{ $index }}.cantidad" class="w-full text-xs border-gray-300 rounded-md text-center">
+                                    <input type="number" min="1" max="9999" step="1" inputmode="numeric" wire:model.blur="items.{{ $index }}.cantidad" class="w-full text-xs border-gray-300 rounded-md text-center">
+                                    @error("items.$index.cantidad") <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
                                 </td>
                                 <td class="p-2">
-                                    <input type="number" step="0.01" min="0" wire:model.live="items.{{ $index }}.precio_unitario" class="w-full text-xs border-gray-300 rounded-md text-right">
+                                    <input type="number" min="0" step="0.01" inputmode="decimal" wire:model.blur="items.{{ $index }}.precio_unitario" class="w-full text-xs border-gray-300 rounded-md text-right">
+                                    @error("items.$index.precio_unitario") <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
                                 </td>
                                 <td class="p-2 text-right font-medium text-gray-900">
                                     ${{ number_format((float)($items[$index]['subtotal'] ?? 0), 2) }}
@@ -111,8 +121,11 @@
                 <a href="{{ route('admin.cotizaciones.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition">
                     Cancelar
                 </a>
-                <button type="submit" class="px-5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition inline-flex items-center gap-2">
-                    <i class="fa-solid fa-floppy-disk"></i> Guardar Cotización
+                <button type="submit" wire:loading.attr="disabled" wire:target="guardar"
+                    class="px-5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fa-solid fa-floppy-disk" wire:loading.remove wire:target="guardar"></i>
+                    <i class="fa-solid fa-spinner fa-spin" wire:loading wire:target="guardar"></i>
+                    Guardar Cotización
                 </button>
             </div>
         </div>

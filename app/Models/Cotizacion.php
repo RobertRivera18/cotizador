@@ -20,6 +20,7 @@ class Cotizacion extends Model
         'nombre_cliente',
         'telefono',
         'email',
+        'cedula_ruc',
         'estado',
         'tipo_origen',
         'total',
