@@ -1,46 +1,100 @@
 @php
 $links = [
-// GENERAL
-[
-'section' => 'General',
-'items' => [
-[
-'name' => 'Dashboard',
-'url' => route('admin.dashboard'),
-'active' => request()->routeIs('admin.dashboard'),
-'icon' => 'fas fa-gauge-simple-high',
-],
-[
-'name' => 'Generadores',
-'url' => route('admin.generadores'),
-'active' => request()->routeIs('admin.generadores'),
-'icon' => 'fas fa-bolt',
-],
-[
-'name' => 'Cotizaciones',
-'url' => route('admin.cotizaciones.index'),
-'active' => request()->routeIs('admin.cotizaciones.*'),
-'icon' => 'fas fa-file-invoice-dollar',
-],
+    // GENERAL
+    [
+        'section' => 'General',
+        'items' => [
+            [
+                'name' => 'Dashboard',
+                'url' => route('admin.dashboard'),
+                'active' => request()->routeIs('admin.dashboard'),
+                'icon' => 'fas fa-gauge-simple-high',
+                'can' => ['Acceso al Dashboard'],
+            ],
+            [
+                'name' => 'Generadores',
+                'url' => route('admin.generadores'),
+                'active' => request()->routeIs('admin.generadores'),
+                'icon' => 'fas fa-bolt',
+                'can' => ['Gestion de generadores'],
+            ],
+            [
+                'name' => 'Cotizaciones',
+                'url' => route('admin.cotizaciones.index'),
+                'active' => request()->routeIs('admin.cotizaciones.*'),
+                'icon' => 'fas fa-file-invoice-dollar',
+                // Debe coincidir con el permiso de la ruta del listado
+                'can' => ['Ver cotizaciones'],
+            ],
+        ],
+    ],
 
-]
-],
-// GESTIÓN Y OPERACIONES
-[
-'section' => 'Operaciones & Logística',
-'items' => [
-
-]
-],
-
-// ADMINISTRACIÓN Y AUDITORÍA
-[
-'section' => 'Organización & Control',
-'items' => [
-
-]
-],
+    // ADMINISTRACIÓN Y AUDITORÍA
+    [
+        'section' => 'Organización & Control',
+        'items' => [
+            [
+                'name' => 'Gestión de Accesos',
+                'icon' => 'fas fa-shield-halved',
+                'submenu' => [
+                    [
+                        'name' => 'Roles',
+                        'url' => route('admin.roles.index'),
+                        'active' => request()->routeIs('admin.roles.*'),
+                        'icon' => 'fas fa-user-tag',
+                        'can' => ['Gestion de roles'],
+                    ],
+                    [
+                        'name' => 'Permisos',
+                        'url' => route('admin.permissions.index'),
+                        'active' => request()->routeIs('admin.permissions.*'),
+                        'icon' => 'fas fa-key',
+                        'can' => ['Gestion de permisos'],
+                    ],
+                    // Solo aparece cuando exista la ruta de usuarios (evita error si aún no está creada)
+                    ...(\Illuminate\Support\Facades\Route::has('admin.users.index') ? [[
+                        'name' => 'Usuarios',
+                        'url' => route('admin.users.index'),
+                        'active' => request()->routeIs('admin.users.*'),
+                        'icon' => 'fas fa-users',
+                        'can' => ['Gestion de Usuarios'],
+                    ]] : []),
+                ],
+            ],
+        ],
+    ],
 ];
+
+// ---- Filtro por permisos: deja solo lo que el usuario puede usar ----
+$usuarioActual = auth()->user();
+$puede = fn (array $permisos) => empty($permisos) || ($usuarioActual && $usuarioActual->canAny($permisos));
+
+$links = collect($links)
+    ->map(function ($group) use ($puede) {
+        $group['items'] = collect($group['items'])
+            ->map(function ($item) use ($puede) {
+                if (isset($item['submenu'])) {
+                    $item['submenu'] = collect($item['submenu'])
+                        ->filter(fn ($sub) => $puede($sub['can'] ?? []))
+                        ->values()
+                        ->all();
+
+                    // Si no queda ningún subítem permitido, se oculta el menú padre
+                    return count($item['submenu']) > 0 ? $item : null;
+                }
+
+                return $puede($item['can'] ?? []) ? $item : null;
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        return $group;
+    })
+    // Si una sección se queda sin ítems, se oculta también su título
+    ->filter(fn ($group) => count($group['items']) > 0)
+    ->values()
+    ->all();
 @endphp
 
 <aside id="logo-sidebar"
@@ -88,7 +142,6 @@ $links = [
                         class="mt-1 pl-4 ms-3.5 space-y-1 border-l-2 border-gray-100 dark:border-gray-800">
 
                         @foreach ($link['submenu'] as $sub)
-                        {{-- @canany($sub['can'] ?? []) --}}
                         <li>
                             <a href="{{ $sub['url'] }}"
                                 class="flex items-center w-full p-2 text-xs font-medium transition-all rounded-lg {{ $sub['active'] ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100/60 dark:hover:bg-gray-800/40 hover:text-gray-900 dark:hover:text-white' }}">
@@ -97,14 +150,12 @@ $links = [
                                 <span class="truncate">{{ $sub['name'] }}</span>
                             </a>
                         </li>
-                        {{-- @endcanany --}}
                         @endforeach
                     </ul>
                 </li>
 
                 {{-- Ítem Individual --}}
                 @else
-                {{-- @canany($link['can'] ?? []) --}}
                 <li>
                     <a href="{{ $link['url'] }}"
                         class="flex items-center p-2.5 text-xs font-medium rounded-xl transition-all group {{ $link['active'] ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-800/60 hover:text-gray-900 dark:hover:text-white' }}">
@@ -113,7 +164,6 @@ $links = [
                         <span class="ms-3 truncate">{{ $link['name'] }}</span>
                     </a>
                 </li>
-                {{-- @endcanany --}}
                 @endif
                 @endforeach
             </ul>

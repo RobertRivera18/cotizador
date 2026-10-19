@@ -5,7 +5,6 @@
         @foreach ($breadcrumbs as $item)
             <li class="flex items-center max-w-full">
 
-                {{-- Separador (no se muestra en el primer elemento) --}}
                 @if (!$loop->first)
                     <svg class="w-3 h-3 text-gray-400 mx-1.5 shrink-0 rtl:rotate-180"
                          aria-hidden="true"
@@ -37,7 +36,6 @@
                         <span class="truncate">{{ $item['name'] }}</span>
                     </a>
 
-                {{-- ÚLTIMO ÍTEM (PÁGINA ACTUAL) --}}
                 @else
                     <span class="inline-flex items-center gap-1.5 font-semibold text-gray-900 dark:text-white truncate max-w-[160px] sm:max-w-[260px] md:max-w-none"
                           aria-current="page">

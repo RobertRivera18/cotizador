@@ -1,11 +1,11 @@
 <x-admin-layout :breadcrumbs="[
     [
         'name' => 'Dashboard',
-        'route' => route('admin.dashboard'),
+        'url' => route('admin.dashboard'),
     ],
     [
         'name' => 'Cotizaciones',
-        'route' => route('admin.cotizaciones.index'),
+        'url' => route('admin.cotizaciones.index'),
     ],
     [
         'name' => 'Editar cotización #' . $cotizacion->id,

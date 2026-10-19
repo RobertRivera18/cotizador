@@ -46,7 +46,7 @@
                     <th class="py-3.5 px-4">Fecha</th>
                     <th class="py-3.5 px-4">Cliente</th>
                     <th class="py-3.5 px-4">Entorno / Tipo</th>
-                    <th class="py-3.5 px-4">Capacidad</th>
+                    <th class="py-3.5 px-4">Capacidad Calculada</th>
                     <th class="py-3.5 px-4 text-right">Total</th>
                     <th class="py-3.5 px-4 text-right">Acciones</th>
                 </tr>
