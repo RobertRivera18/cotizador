@@ -18,7 +18,7 @@ class Generadores extends Component
     public $capacidad_kw = '';
     public string $combustible = 'diesel';
     public $precio = null;
-    public string $descripcion = '';
+    public string $descripcion = '';     // HTML generado por el editor Quill (se limpia al guardar)
     public bool $activo = true;
     public $imagen = null;               // archivo nuevo subido
     public ?string $imagenActual = null; // ruta guardada
@@ -35,10 +35,19 @@ class Generadores extends Component
             'capacidad_kw'  => 'required|numeric|min:0|max:999999.99',
             'combustible'   => 'required|in:gasolina,diesel,gas',
             'precio'        => 'nullable|numeric|min:0|max:99999999.99',
-            'descripcion'   => 'nullable|string',
+            'descripcion'   => 'nullable|string|max:5000',
             'activo'        => 'boolean',
             'imagen'        => 'nullable|image|max:2048',
         ];
+    }
+
+    /**
+     * El middleware de la ruta solo protege la carga de la página.
+     * Los métodos de Livewire se pueden invocar por separado, así que se comprueba aquí también.
+     */
+    private function autorizar(): void
+    {
+        abort_unless(auth()->user()?->can('Gestion de generadores'), 403);
     }
 
     public function updatingSearch(): void
@@ -48,12 +57,16 @@ class Generadores extends Component
 
     public function crear(): void
     {
+        $this->autorizar();
+
         $this->resetFormulario();
         $this->modalForm = true;
     }
 
     public function editar(int $id): void
     {
+        $this->autorizar();
+
         $g = Generador::findOrFail($id);
 
         $this->generadorId   = $g->id;
@@ -73,10 +86,12 @@ class Generadores extends Component
 
     public function guardar(): void
     {
+        $this->autorizar();
+
         $datos = $this->validate();
 
         $datos['precio'] = $datos['precio'] === '' ? null : $datos['precio'];
-        $datos['descripcion'] = $datos['descripcion'] ?: null;
+        $datos['descripcion'] = $this->limpiarHtml($datos['descripcion']);
 
         if ($this->imagen) {
             if ($this->imagenActual) {
@@ -106,6 +121,8 @@ class Generadores extends Component
 
     public function eliminar(int $id): void
     {
+        $this->autorizar();
+
         $g = Generador::findOrFail($id);
 
         if ($g->imagen) {
@@ -137,6 +154,24 @@ class Generadores extends Component
             'imagen', 'imagenActual',
         ]);
         $this->resetValidation();
+    }
+
+    /**
+     * Deja solo el formato básico que genera el editor (negrita, cursiva, subrayado, listas)
+     * y elimina cualquier atributo (onclick, style, etc.) para que sea seguro mostrarlo con {!! !!}.
+     */
+    private function limpiarHtml(?string $html): ?string
+    {
+        $html = trim((string) $html);
+
+        // Vacío, o solo etiquetas sin texto
+        if ($html === '' || trim(strip_tags($html)) === '') {
+            return null;
+        }
+
+        $html = strip_tags($html, '<p><br><strong><em><u><ol><ul><li>');
+
+        return preg_replace('/<(p|br|strong|em|u|ol|ul|li)\b[^>]*>/i', '<$1>', $html);
     }
 
     public function render()

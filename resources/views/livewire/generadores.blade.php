@@ -255,12 +255,50 @@
                                 </div>
                             </div>
 
+                            {{-- Descripción con editor Quill --}}
+                            @php
+                                // Descripciones antiguas guardadas como texto plano: se convierten a HTML para el editor
+                                $descripcionInicial = (string) ($descripcion ?? '');
+                                if ($descripcionInicial !== '' && ! preg_match('/<[a-z][\s\S]*>/i', $descripcionInicial)) {
+                                    $descripcionInicial = nl2br(e($descripcionInicial));
+                                }
+                            @endphp
                             <div>
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Descripción o
                                     detalles</label>
-                                <textarea wire:model="descripcion" rows="2"
-                                    placeholder="Especificaciones adicionales..."
-                                    class="w-full bg-gray-50/50 border border-gray-200 rounded-lg px-3.5 py-2 text-sm focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"></textarea>
+
+                                <div wire:ignore x-data="{
+                                    init() {
+                                        const wire = this.$wire;
+
+                                        const quill = new Quill(this.$refs.editor, {
+                                            theme: 'snow',
+                                            placeholder: 'Especificaciones adicionales...',
+                                            modules: {
+                                                toolbar: [
+                                                    ['bold', 'italic', 'underline'],
+                                                    [{ list: 'ordered' }, { list: 'bullet' }],
+                                                    ['clean'],
+                                                ],
+                                            },
+                                        });
+
+                                        // Contenido inicial (al editar). 'silent' evita marcarlo como cambio del usuario
+                                        const inicial = @js($descripcionInicial);
+                                        if (inicial) {
+                                            quill.clipboard.dangerouslyPasteHTML(inicial, 'silent');
+                                        }
+
+                                        // Sincroniza con Livewire sin lanzar una petición en cada tecla
+                                        quill.on('text-change', () => {
+                                            const vacio = quill.getText().trim() === '';
+                                            wire.set('descripcion', vacio ? '' : quill.getSemanticHTML(), false);
+                                        });
+                                    }
+                                }">
+                                    <div x-ref="editor" class="bg-white text-sm" style="min-height: 120px;"></div>
+                                </div>
+
                                 @error('descripcion') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
                         </div>
