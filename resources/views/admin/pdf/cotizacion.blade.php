@@ -88,6 +88,7 @@
         .items td.num { color: #b45309; }
         .items td.money { color: #1e3a8a; text-align: right; }
         .items .prod { text-transform: uppercase; text-align: left; }
+        .items .prod .spec { font-size: 8.5px; color: #444; margin-top: 3px; }
 
         /* ===== TOTALES ===== */
         .totals-wrap { width: 100%; }
@@ -200,7 +201,16 @@
                 <tr>
                     <td class="num">{{ $i + 1 }}</td>
                     <td class="num">{{ $d->cantidad }}</td>
-                    <td class="prod">{{ $d->descripcion }}</td>
+                    <td class="prod">
+                        {{ $d->descripcion }}
+                        @if ($d->generador)
+                            <div class="spec">
+                                MARCA: {{ $d->generador->marca ?? 'N/A' }}
+                                &nbsp;|&nbsp; FASE: {{ $d->generador->fases ?? 'N/A' }}
+                                &nbsp;|&nbsp; POTENCIA: {{ $d->generador->capacidad_kw }} KW
+                            </div>
+                        @endif
+                    </td>
                     <td class="money">$ &nbsp;&nbsp;&nbsp; {{ number_format($d->precio_unitario, 2) }}</td>
                     <td class="money">$ &nbsp;&nbsp;&nbsp; {{ number_format($d->subtotal, 2) }}</td>
                 </tr>

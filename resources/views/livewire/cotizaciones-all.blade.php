@@ -295,12 +295,12 @@
                     <div class="rounded-xl border border-blue-100 bg-blue-50/30 p-4">
                         <p class="text-[11px] font-semibold uppercase tracking-wide text-blue-500 mb-1">Modelo de
                             interés</p>
-                        @if ($c->generador)
-                        <p class="text-sm font-bold text-gray-900">{{ $c->generador->nombre }}</p>
-                        <p class="text-xs text-gray-500 mt-0.5">{{ $c->generador->capacidad_kva }} kVA · {{
-                            $c->generador->capacidad_kw }} kW</p>
-                        <p class="text-sm font-bold text-blue-700 mt-2">{{ $c->generador->precio !== null ? '$' .
-                            number_format($c->generador->precio, 2) : 'Consultar' }}</p>
+                        @if ($c->equipo)
+                        <p class="text-sm font-bold text-gray-900">{{ $c->equipo->nombre }}</p>
+                        <p class="text-xs text-gray-500 mt-0.5">{{ $c->equipo->capacidad_kva }} kVA · {{
+                            $c->equipo->capacidad_kw }} kW</p>
+                        <p class="text-sm font-bold text-blue-700 mt-2">{{ $c->equipo->precio !== null ? '$' .
+                            number_format($c->equipo->precio, 2) : 'Consultar' }}</p>
                         @else
                         <p class="text-xs text-gray-500 italic">Consulta general sin modelo preseleccionado.</p>
                         @endif

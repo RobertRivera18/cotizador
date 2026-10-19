@@ -4,25 +4,29 @@ namespace App\Livewire;
 
 use App\Models\Cotizacion;
 use App\Models\CotizacionDetalle;
-use App\Models\Generador;
 use App\Models\Entorno;
-use Livewire\Component;
+use App\Models\Equipo;
 use Illuminate\Support\Facades\DB;
+use Livewire\Component;
 
 class CotizacionEdit extends Component
 {
-    public Cotizacion $cotizacion;
+    public const TIPOS = [
+        'generador' => 'Generador',
+        'bateria'   => 'Batería',
+    ];
 
+    public Cotizacion $cotizacion;
     public $nombre_cliente = '';
     public $telefono = '';
     public $email = '';
     public $cedula_ruc = '';
     public $entorno_id = null;
 
-    public $items = [];
-    public $detallesEliminados = [];
+    public array $items = [];
+    public array $detallesEliminados = [];
 
-    public function mount(Cotizacion $cotizacion)
+    public function mount(Cotizacion $cotizacion): void
     {
         $this->cotizacion = $cotizacion;
 
@@ -32,10 +36,12 @@ class CotizacionEdit extends Component
         $this->cedula_ruc     = $cotizacion->cedula_ruc;
         $this->entorno_id     = $cotizacion->entorno_id;
 
-        $this->items = $cotizacion->detalles->map(function ($d) {
+        $detalles = $cotizacion->detalles;
+
+        $this->items = $detalles->map(function ($d) {
             return [
                 'id'              => $d->id,
-                'generador_id'    => $d->generador_id ?? '',
+                'equipo_id'       => $d->equipo_id ?? '',
                 'descripcion'     => $d->descripcion,
                 'cantidad'        => (int) $d->cantidad,
                 'precio_unitario' => (float) $d->precio_unitario,
@@ -48,11 +54,11 @@ class CotizacionEdit extends Component
         }
     }
 
-    public function agregarFila()
+    public function agregarFila(): void
     {
         $this->items[] = [
             'id'              => null,
-            'generador_id'    => '',
+            'equipo_id'       => '',
             'descripcion'     => '',
             'cantidad'        => 1,
             'precio_unitario' => 0.00,
@@ -60,7 +66,7 @@ class CotizacionEdit extends Component
         ];
     }
 
-    public function eliminarFila($index)
+    public function eliminarFila($index): void
     {
         if (!empty($this->items[$index]['id'])) {
             $this->detallesEliminados[] = $this->items[$index]['id'];
@@ -70,32 +76,35 @@ class CotizacionEdit extends Component
         $this->items = array_values($this->items);
     }
 
-    public function updatedItems($value, $key)
+    public function updatedItems($value, $key): void
     {
         $parts = explode('.', $key);
-        if (count($parts) === 2) {
-            $index = $parts[0];
-            $campo = $parts[1];
 
-            if ($campo === 'generador_id' && !empty($value)) {
-                $generador = Generador::find($value);
-                if ($generador) {
-                    $this->items[$index]['descripcion'] = $generador->nombre ?? $generador->modelo;
-                    $this->items[$index]['precio_unitario'] = $generador->precio ?? 0.00;
-                }
-            }
-
-            $cant   = (float) ($this->items[$index]['cantidad'] ?? 0);
-            $precio = (float) ($this->items[$index]['precio_unitario'] ?? 0);
-            $this->items[$index]['subtotal'] = round($cant * $precio, 2);
+        if (count($parts) !== 2) {
+            return;
         }
+
+        [$index, $campo] = $parts;
+
+        if ($campo === 'equipo_id' && !empty($value)) {
+            $equipo = Equipo::where('activo', true)->find($value);
+
+            if ($equipo) {
+                $this->items[$index]['descripcion']     = $equipo->nombre;
+                $this->items[$index]['precio_unitario'] = $equipo->precio ?? 0.00;
+            }
+        }
+
+        $cant   = (float) ($this->items[$index]['cantidad'] ?? 0);
+        $precio = (float) ($this->items[$index]['precio_unitario'] ?? 0);
+        $this->items[$index]['subtotal'] = round($cant * $precio, 2);
     }
 
-    public function getTotalProperty()
+    public function getTotalProperty(): float
     {
         return array_reduce($this->items, function ($carry, $item) {
             return $carry + ((float) ($item['cantidad'] ?? 0) * (float) ($item['precio_unitario'] ?? 0));
-        }, 0);
+        }, 0.0);
     }
 
     public function actualizar()
@@ -107,15 +116,16 @@ class CotizacionEdit extends Component
             'cedula_ruc'              => 'nullable|digits_between:10,13',
             'entorno_id'              => 'nullable|exists:entornos,id',
             'items'                   => 'required|array|min:1',
+            'items.*.equipo_id'       => 'nullable|exists:equipos,id',
             'items.*.descripcion'     => 'required|string|max:255',
             'items.*.cantidad'        => 'required|integer|min:1',
             'items.*.precio_unitario' => 'required|numeric|min:0',
-            'items.*.generador_id'    => 'nullable',
         ], [
             'nombre_cliente.required'      => 'El nombre del cliente es obligatorio.',
             'items.required'               => 'Debe agregar al menos un ítem a la cotización.',
             'items.*.descripcion.required' => 'La descripción del ítem es obligatoria.',
             'items.*.cantidad.required'    => 'La cantidad debe ser al menos 1.',
+            'items.*.equipo_id.exists'     => 'El equipo seleccionado ya no existe.',
         ]);
 
         DB::transaction(function () {
@@ -137,11 +147,11 @@ class CotizacionEdit extends Component
 
             foreach ($this->items as $item) {
                 $datos = [
-                    'generador_id'    => !empty($item['generador_id']) ? $item['generador_id'] : null,
+                    'equipo_id'       => !empty($item['equipo_id']) ? $item['equipo_id'] : null,
                     'descripcion'     => $item['descripcion'],
                     'cantidad'        => $item['cantidad'],
                     'precio_unitario' => $item['precio_unitario'],
-                    'subtotal'        => $item['cantidad'] * $item['precio_unitario'],
+                    'subtotal'        => round($item['cantidad'] * $item['precio_unitario'], 2),
                 ];
 
                 if (!empty($item['id'])) {
@@ -155,14 +165,23 @@ class CotizacionEdit extends Component
         });
 
         session()->flash('message', 'Cotización actualizada con éxito.');
+
         return redirect()->route('admin.cotizaciones.index');
     }
 
     public function render()
     {
+        $idsEnCotizacion = collect($this->items)->pluck('equipo_id')->filter()->all();
         return view('livewire.cotizacion-edit', [
-            'generadores' => Generador::where('activo', true)->get(),
-            'entornos'    => Entorno::all(),
+            'tipos'          => self::TIPOS,
+            'equiposPorTipo' => Equipo::where(function ($q) use ($idsEnCotizacion) {
+                    $q->where('activo', true)->orWhereIn('id', $idsEnCotizacion);
+                })
+                ->orderBy('tipo')
+                ->orderBy('nombre')
+                ->get(['id', 'tipo', 'nombre', 'marca', 'precio', 'capacidad_kw', 'capacidad_kva', 'fases'])
+                ->groupBy('tipo'),
+            'entornos'       => Entorno::all(),
         ]);
     }
 }

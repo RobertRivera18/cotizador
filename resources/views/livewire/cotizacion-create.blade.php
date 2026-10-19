@@ -1,3 +1,20 @@
+@php
+    // Número sin ceros sobrantes: 10.00 -> 10, 2.50 -> 2.5
+    $fmt = fn ($v) => rtrim(rtrim(number_format((float) $v, 2, '.', ''), '0'), '.');
+
+    // Texto de cada opción del selector. Solo usa columnas que existen en `equipos`;
+    // las fases se muestran únicamente en generadores.
+    $etiquetaEquipo = function ($e) use ($fmt) {
+        return implode(' — ', array_filter([
+            $e->nombre,
+            $e->marca,
+            $e->capacidad_kw !== null ? $fmt($e->capacidad_kw) . ' kW' : null,
+            $e->capacidad_kva !== null ? $fmt($e->capacidad_kva) . ' kVA' : null,
+            $e->tipo === 'generador' && $e->fases ? ucfirst($e->fases) : null,
+        ]));
+    };
+@endphp
+
 <div class="max-w-7xl mx-auto p-6 bg-white rounded-xl shadow-sm border border-gray-100 space-y-6">
     <div class="flex justify-between items-center border-b pb-4">
         <div>
@@ -61,7 +78,7 @@
                 <table class="w-full text-left text-sm text-gray-600">
                     <thead class="bg-gray-100 text-xs uppercase text-gray-700">
                         <tr>
-                            <th class="p-3 w-1/4">Equipo / Servicio</th>
+                            <th class="p-3 w-1/3 min-w-[16rem]">Equipo / Servicio</th>
                             <th class="p-3">Descripción / Detalle *</th>
                             <th class="p-3 w-24 text-center">Cant.</th>
                             <th class="p-3 w-32 text-right">P. Unitario ($)</th>
@@ -72,33 +89,40 @@
                     <tbody class="divide-y divide-gray-200">
                         @foreach($items as $index => $item)
                             <tr wire:key="item-{{ $index }}">
-                                <td class="p-2">
-                                    {{-- El select sí es .live: elegir un equipo rellena descripción y precio --}}
-                                    <select wire:model.live="items.{{ $index }}.generador_id" class="w-full text-xs border-gray-300 rounded-md">
+                                <td class="p-2 align-top">
+                                    {{-- Todos los equipos (generadores y baterías), agrupados por tipo. Es .live, elegirlo rellena descripción y precio --}}
+                                    <select wire:model.live="items.{{ $index }}.equipo_id"
+                                        aria-label="Equipo"
+                                        class="w-full text-xs border-gray-300 rounded-md">
                                         <option value="">Personalizado / Otro</option>
-                                        @foreach($generadores as $gen)
-                                            <option value="{{ $gen->id }}">{{ $gen->nombre ?? $gen->modelo }}</option>
+                                        @foreach($equiposPorTipo as $tipoClave => $lista)
+                                            <optgroup label="{{ $tipos[$tipoClave] ?? ucfirst($tipoClave) }}">
+                                                @foreach($lista as $equipo)
+                                                    <option value="{{ $equipo->id }}">{{ $etiquetaEquipo($equipo) }}</option>
+                                                @endforeach
+                                            </optgroup>
                                         @endforeach
                                     </select>
+                                    @error("items.$index.equipo_id") <span class="text-red-500 text-[10px] block">{{ $message }}</span> @enderror
                                 </td>
-                                <td class="p-2">
+                                <td class="p-2 align-top">
                                     <input type="text" maxlength="255" wire:model.blur="items.{{ $index }}.descripcion" placeholder="Ej: Generador Diésel 20kVA + Tablero ATS" class="w-full text-xs border-gray-300 rounded-md">
                                     @error("items.$index.descripcion") <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
                                 </td>
-                                <td class="p-2">
+                                <td class="p-2 align-top">
                                     <input type="number" min="1" max="9999" step="1" inputmode="numeric" wire:model.blur="items.{{ $index }}.cantidad" class="w-full text-xs border-gray-300 rounded-md text-center">
                                     @error("items.$index.cantidad") <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
                                 </td>
-                                <td class="p-2">
+                                <td class="p-2 align-top">
                                     <input type="number" min="0" step="0.01" inputmode="decimal" wire:model.blur="items.{{ $index }}.precio_unitario" class="w-full text-xs border-gray-300 rounded-md text-right">
                                     @error("items.$index.precio_unitario") <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
                                 </td>
-                                <td class="p-2 text-right font-medium text-gray-900">
+                                <td class="p-2 align-top text-right font-medium text-gray-900 pt-3">
                                     ${{ number_format((float)($items[$index]['subtotal'] ?? 0), 2) }}
                                 </td>
-                                <td class="p-2 text-center">
+                                <td class="p-2 align-top text-center pt-3">
                                     @if(count($items) > 1)
-                                        <button type="button" wire:click="eliminarFila({{ $index }})" class="text-red-500 hover:text-red-700">
+                                        <button type="button" wire:click="eliminarFila({{ $index }})" aria-label="Eliminar línea" class="text-red-500 hover:text-red-700">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
                                     @endif

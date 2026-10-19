@@ -6,11 +6,10 @@ use Livewire\Component;
 use App\Models\Cotizacion;
 use App\Models\Entorno;
 use App\Models\EquipoElectrico;
-use App\Models\Generador;
+use App\Models\Equipo;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Illuminate\Support\Facades\DB;
-
 
 class Cotizador extends Component
 {
@@ -43,6 +42,7 @@ class Cotizador extends Component
             $this->seleccionarEntorno($primerEntorno->id);
         }
     }
+
     #[Computed]
     public function entornos(): Collection
     {
@@ -69,6 +69,7 @@ class Cotizador extends Component
         $this->prioridades = [];
         $this->resetResultado();
     }
+
     #[Computed]
     public function sugerenciasBusqueda(): Collection
     {
@@ -117,6 +118,7 @@ class Cotizador extends Component
     {
         unset($this->equipos[$equipoId], $this->prioridades[$equipoId]);
     }
+
     #[Computed]
     public function equiposActivos(): Collection
     {
@@ -172,6 +174,7 @@ class Cotizador extends Component
     {
         $this->step = 4;
     }
+
     #[Computed]
     public function resultado(): array
     {
@@ -211,7 +214,8 @@ class Cotizador extends Component
             ->keys()
             ->toArray();
 
-        return Generador::activos()
+        return Equipo::generadores()
+            ->activos()
             ->combustibleEn($combustiblesActivos)
             ->conCapacidadMinima($this->resultado()['capacidad_kva'])
             ->orderBy('capacidad_kva')
@@ -221,10 +225,10 @@ class Cotizador extends Component
 
     /** Generador elegido por el cliente para cotizar (se muestra en el modal). */
     #[Computed]
-    public function generadorElegido(): ?Generador
+    public function generadorElegido(): ?Equipo
     {
         return $this->generadorSeleccionado
-            ? Generador::find($this->generadorSeleccionado)
+            ? Equipo::find($this->generadorSeleccionado)
             : null;
     }
 
@@ -232,7 +236,6 @@ class Cotizador extends Component
     {
         unset($this->resultado, $this->generadoresRecomendados);
     }
-
 
     public function siguientePaso(): void
     {
@@ -258,7 +261,6 @@ class Cotizador extends Component
 
     public function irAlPaso(int $paso): void
     {
-        // Solo permite saltar hacia atrás libremente, o hacia adelante si ya hay entorno + equipos
         if ($paso <= $this->step || ($this->entorno_id && $this->equiposActivos()->isNotEmpty())) {
             $this->step = $paso;
         }
@@ -270,7 +272,6 @@ class Cotizador extends Component
 
     public function abrirModalCotizacion(?int $generadorId = null): void
     {
-        // Si ya se envió una cotización, no se puede reabrir el formulario
         if ($this->cotizacionEnviada) {
             return;
         }
@@ -282,7 +283,6 @@ class Cotizador extends Component
 
     public function cerrarModalCotizacion(): void
     {
-        // Después de enviar, cerrar el modal reinicia todo y vuelve al inicio
         if ($this->cotizacionEnviada) {
             $this->nuevaCotizacion();
 
@@ -303,7 +303,7 @@ class Cotizador extends Component
             'nombre_cliente' => 'required|string|max:120',
             'telefono' => 'required|string|max:30',
             'email' => 'nullable|email|max:150',
-            'generadorSeleccionado' => 'nullable|exists:generadores,id',
+            'generadorSeleccionado' => 'nullable|exists:equipos,id', // Actualizado a la tabla 'equipos'
         ]);
 
         $duplicada = Cotizacion::where('telefono', $this->telefono)
@@ -318,10 +318,10 @@ class Cotizador extends Component
             return;
         }
 
-                $resultado = $this->resultado();
+        $resultado = $this->resultado();
 
         $generador = $this->generadorSeleccionado
-            ? Generador::find($this->generadorSeleccionado)
+            ? Equipo::find($this->generadorSeleccionado)
             : null;
 
         DB::transaction(function () use ($resultado, $generador) {
@@ -329,7 +329,7 @@ class Cotizador extends Component
                 'entorno_id'                => $this->entorno_id,
                 'generador_id'              => $generador?->id,
                 'equipos_json'              => $this->equiposActivos()->map(fn(EquipoElectrico $e) => [
-                    'id'        => $e->id,
+                    'id'    => $e->id,
                     'nombre'    => $e->nombre,
                     'cantidad'  => $e->cantidad_seleccionada,
                     'prioridad' => $this->prioridades[$e->id] ?? null,
@@ -361,7 +361,6 @@ class Cotizador extends Component
         $this->cotizacionEnviada = true;
         $this->dispatch('cotizacion-enviada', nombre: $this->nombre_cliente);
     }
-
 
     /** Limpia todo y regresa al paso 1 para empezar una cotización nueva. */
     public function nuevaCotizacion(): void

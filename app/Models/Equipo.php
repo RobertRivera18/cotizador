@@ -5,14 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 
-class Generador extends Model
+class Equipo extends Model
 {
-    protected $table = "generadores";
+    protected $table = "equipos";
+    
     protected $fillable = [
+        'tipo',
         'nombre',
         'capacidad_kva',
         'capacidad_kw',
         'combustible',
+        'marca',
+        'fases',
         'precio',
         'imagen',
         'descripcion',
@@ -31,17 +35,23 @@ class Generador extends Model
         return $query->where('activo', true);
     }
 
-    /**
-     * Filtra por uno o varios combustibles. Si el arreglo viene vacío,
-     * no aplica filtro (se muestran todos).
-     */
+    public function scopeGeneradores(Builder $query): Builder
+    {
+        return $query->where('tipo', 'generador');
+    }
+
+    public function scopeBaterias(Builder $query): Builder
+    {
+        return $query->where('tipo', 'bateria');
+    }
+    
     public function scopeCombustibleEn(Builder $query, array $combustibles): Builder
     {
-        return count($combustibles) ? $query->whereIn('combustible', $combustibles) : $query;
+        return count($combustibles) ? $query->where('tipo', 'generador')->whereIn('combustible', $combustibles) : $query;
     }
 
     public function scopeConCapacidadMinima(Builder $query, float $kva): Builder
     {
-        return $query->where('capacidad_kva', '>=', $kva);
+        return $query->where('tipo', 'generador')->where('capacidad_kva', '>=', $kva);
     }
 }

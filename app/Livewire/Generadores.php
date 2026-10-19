@@ -2,7 +2,7 @@
 
 namespace App\Livewire;
 
-use App\Models\Generador;
+use App\Models\Equipo;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -12,39 +12,51 @@ class Generadores extends Component
 {
     use WithFileUploads, WithPagination;
 
-    public ?int $generadorId = null;
+    public ?int $equipoId = null;
+    public string $tipo = 'generador'; // 'generador' o 'bateria'
     public string $nombre = '';
     public $capacidad_kva = '';
     public $capacidad_kw = '';
+    public $marca = '';
+    public $fases = '';
     public string $combustible = 'diesel';
     public $precio = null;
-    public string $descripcion = '';     // HTML generado por el editor Quill (se limpia al guardar)
+    public string $descripcion = '';
     public bool $activo = true;
-    public $imagen = null;               // archivo nuevo subido
-    public ?string $imagenActual = null; // ruta guardada
+    public $imagen = null;
+    public ?string $imagenActual = null;
 
-    // UI
+    
     public string $search = '';
     public bool $modalForm = false;
 
     protected function rules(): array
     {
-        return [
+        $rules = [
+            'tipo'          => 'required|in:generador,bateria',
             'nombre'        => 'required|string|max:255',
-            'capacidad_kva' => 'required|numeric|min:0|max:999999.99',
-            'capacidad_kw'  => 'required|numeric|min:0|max:999999.99',
-            'combustible'   => 'required|in:gasolina,diesel,gas',
+            'marca'         => 'nullable|string|max:255',
             'precio'        => 'nullable|numeric|min:0|max:99999999.99',
             'descripcion'   => 'nullable|string|max:5000',
             'activo'        => 'boolean',
             'imagen'        => 'nullable|image|max:2048',
         ];
+
+        if ($this->tipo === 'generador') {
+            $rules['capacidad_kva'] = 'nullable|numeric|min:0|max:999999.99';
+            $rules['capacidad_kw']  = 'required|numeric|min:0|max:999999.99';
+            $rules['fases']         = 'required|string|max:255';
+            $rules['combustible']   = 'required|in:gasolina,diesel,gas';
+        } else {
+            $rules['capacidad_kva'] = 'nullable|numeric|min:0|max:999999.99';
+            $rules['capacidad_kw']  = 'nullable|numeric|min:0|max:999999.99';
+            $rules['fases']         = 'nullable|string|max:255';
+            $rules['combustible']   = 'nullable|in:gasolina,diesel,gas';
+        }
+
+        return $rules;
     }
 
-    /**
-     * El middleware de la ruta solo protege la carga de la página.
-     * Los métodos de Livewire se pueden invocar por separado, así que se comprueba aquí también.
-     */
     private function autorizar(): void
     {
         abort_unless(auth()->user()?->can('Gestion de generadores'), 403);
@@ -67,17 +79,20 @@ class Generadores extends Component
     {
         $this->autorizar();
 
-        $g = Generador::findOrFail($id);
+        $e = Equipo::findOrFail($id);
 
-        $this->generadorId   = $g->id;
-        $this->nombre        = $g->nombre;
-        $this->capacidad_kva = $g->capacidad_kva;
-        $this->capacidad_kw  = $g->capacidad_kw;
-        $this->combustible   = $g->combustible;
-        $this->precio        = $g->precio;
-        $this->descripcion   = $g->descripcion ?? '';
-        $this->activo        = $g->activo;
-        $this->imagenActual  = $g->imagen;
+        $this->equipoId      = $e->id;
+        $this->tipo          = $e->tipo ?? 'generador';
+        $this->nombre        = $e->nombre;
+        $this->capacidad_kva = $e->capacidad_kva;
+        $this->capacidad_kw  = $e->capacidad_kw;
+        $this->marca         = $e->marca ?? '';
+        $this->fases         = $e->fases ?? '';
+        $this->combustible   = $e->combustible ?? 'diesel';
+        $this->precio        = $e->precio;
+        $this->descripcion   = $e->descripcion ?? '';
+        $this->activo        = $e->activo;
+        $this->imagenActual  = $e->imagen;
         $this->imagen        = null;
 
         $this->resetValidation();
@@ -93,27 +108,35 @@ class Generadores extends Component
         $datos['precio'] = $datos['precio'] === '' ? null : $datos['precio'];
         $datos['descripcion'] = $this->limpiarHtml($datos['descripcion']);
 
+        if ($datos['tipo'] === 'bateria') {
+            $datos['combustible'] = null;
+            $datos['fases'] = null;
+            $datos['capacidad_kva'] = $datos['capacidad_kva'] === '' ? null : $datos['capacidad_kva'];
+            $datos['capacidad_kw'] = $datos['capacidad_kw'] === '' ? null : $datos['capacidad_kw'];
+        }
+
         if ($this->imagen) {
             if ($this->imagenActual) {
                 Storage::disk('public')->delete($this->imagenActual);
             }
-            $datos['imagen'] = $this->imagen->store('generadores', 'public');
+            $datos['imagen'] = $this->imagen->store('equipos', 'public');
         } else {
             unset($datos['imagen']);
         }
 
-        $esEdicion = (bool) $this->generadorId;
+        $esEdicion = (bool) $this->equipoId;
 
-        Generador::updateOrCreate(['id' => $this->generadorId], $datos);
+        Equipo::updateOrCreate(['id' => $this->equipoId], $datos);
 
         $this->cerrarModal();
 
-        $this->dispatch('swal',
+        $this->dispatch(
+            'swal',
             icon: 'success',
             title: $esEdicion ? '¡Actualizado!' : '¡Creado!',
             text: $esEdicion
-                ? 'El generador ha sido actualizado correctamente.'
-                : 'El generador ha sido creado correctamente.',
+                ? 'El equipo ha sido actualizado correctamente.'
+                : 'El equipo ha sido creado correctamente.',
             timer: 3000,
             showConfirmButton: false
         );
@@ -123,18 +146,19 @@ class Generadores extends Component
     {
         $this->autorizar();
 
-        $g = Generador::findOrFail($id);
+        $e = Equipo::findOrFail($id);
 
-        if ($g->imagen) {
-            Storage::disk('public')->delete($g->imagen);
+        if ($e->imagen) {
+            Storage::disk('public')->delete($e->imagen);
         }
 
-        $g->delete();
+        $e->delete();
 
-        $this->dispatch('swal',
+        $this->dispatch(
+            'swal',
             icon: 'success',
             title: '¡Eliminado!',
-            text: 'El generador fue eliminado del sistema.',
+            text: 'El equipo fue eliminado del sistema.',
             timer: 3000,
             showConfirmButton: false
         );
@@ -149,22 +173,29 @@ class Generadores extends Component
     private function resetFormulario(): void
     {
         $this->reset([
-            'generadorId', 'nombre', 'capacidad_kva', 'capacidad_kw',
-            'combustible', 'precio', 'descripcion', 'activo',
-            'imagen', 'imagenActual',
+            'equipoId',
+            'tipo',
+            'nombre',
+            'capacidad_kva',
+            'capacidad_kw',
+            'marca',
+            'fases',
+            'combustible',
+            'precio',
+            'descripcion',
+            'activo',
+            'imagen',
+            'imagenActual',
         ]);
+        $this->tipo = 'generador';
+        $this->combustible = 'diesel';
         $this->resetValidation();
     }
 
-    /**
-     * Deja solo el formato básico que genera el editor (negrita, cursiva, subrayado, listas)
-     * y elimina cualquier atributo (onclick, style, etc.) para que sea seguro mostrarlo con {!! !!}.
-     */
     private function limpiarHtml(?string $html): ?string
     {
         $html = trim((string) $html);
 
-        // Vacío, o solo etiquetas sin texto
         if ($html === '' || trim(strip_tags($html)) === '') {
             return null;
         }
@@ -176,8 +207,9 @@ class Generadores extends Component
 
     public function render()
     {
-        $generadores = Generador::query()
-            ->when($this->search, fn ($q) => $q->where('nombre', 'like', "%{$this->search}%"))
+        $generadores = Equipo::query()
+            ->when($this->search, fn($q) => $q->where('nombre', 'like', "%{$this->search}%")
+                ->orWhere('marca', 'like', "%{$this->search}%"))
             ->latest()
             ->paginate(5);
 

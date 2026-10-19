@@ -29,8 +29,8 @@ class CotizacionDetalle extends Model
         return $this->belongsTo(Cotizacion::class);
     }
 
-    public function generador(): BelongsTo
+    public function equipo(): BelongsTo
     {
-        return $this->belongsTo(Generador::class);
+        return $this->belongsTo(Equipo::class);
     }
 }

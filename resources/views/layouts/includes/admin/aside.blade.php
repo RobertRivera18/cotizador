@@ -12,7 +12,7 @@ $links = [
                 'can' => ['Acceso al Dashboard'],
             ],
             [
-                'name' => 'Generadores',
+                'name' => 'Equipos FotoVoltaicos',
                 'url' => route('admin.generadores'),
                 'active' => request()->routeIs('admin.generadores'),
                 'icon' => 'fas fa-bolt',

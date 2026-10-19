@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -16,15 +17,12 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $permisos = [
             'Acceso al Dashboard',
-
             'Gestion de generadores',
-
             'Ver cotizaciones',
             'Crear cotizaciones',
             'Editar cotizaciones',
             'Eliminar cotizaciones',
             'Descargar PDF cotizaciones',
-
             'Gestion de roles',
             'Gestion de permisos',
             'Gestion de Usuarios',
@@ -36,6 +34,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $admin = Role::firstOrCreate(['name' => 'Administrador', 'guard_name' => 'web']);
         $admin->syncPermissions(Permission::all());
+
         $asesor = Role::firstOrCreate(['name' => 'Asesor', 'guard_name' => 'web']);
         $asesor->syncPermissions([
             'Acceso al Dashboard',
@@ -44,6 +43,15 @@ class RolesAndPermissionsSeeder extends Seeder
             'Editar cotizaciones',
             'Descargar PDF cotizaciones',
         ]);
-        User::where('email', 'rxrc1819@gmail.com')->first()?->assignRole('Administrador');
+
+        $user = User::firstOrCreate(
+            ['email' => 'rxrc1819@gmail.com'],
+            [
+                'name' => 'Administrador',
+                'password' => Hash::make('12345678'),
+            ]
+        );
+
+        $user->assignRole('Administrador');
     }
 }

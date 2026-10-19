@@ -24,7 +24,7 @@ Route::resource('/permissions', PermissionController::class)
     ->middleware('can:Gestion de permisos')
     ->names('admin.permissions');
 
-Route::get('/generadores', Generadores::class)
+Route::get('/equipos', Generadores::class)
     ->middleware('can:Gestion de generadores')
     ->name('admin.generadores');
 

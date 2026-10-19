@@ -56,7 +56,7 @@ class CotizacionesAll extends Component
     public function cotizacion(): ?Cotizacion
     {
         return $this->cotizacionId
-            ? Cotizacion::with(['entorno', 'generador', 'detalles.generador'])->find($this->cotizacionId)
+            ? Cotizacion::with(['entorno', 'equipo', 'detalles.equipo'])->find($this->cotizacionId)
             : null;
     }
 
@@ -102,12 +102,11 @@ class CotizacionesAll extends Component
             '',
         ];
 
-        // Cotización web: siempre se muestra el cálculo y los equipos a respaldar
         if (($c->tipo_origen ?? 'web') !== 'manual') {
             $lineas[] = 'Entorno: ' . ($c->entorno?->nombre ?? '—');
             $lineas[] = "Potencia total: {$c->potencia_total_w} W";
             $lineas[] = "Capacidad recomendada: {$c->capacidad_recomendada_kva} kVA / {$c->capacidad_recomendada_kw} kW";
-            $lineas[] = 'Modelo elegido: ' . ($c->generador?->nombre ?? 'Sin modelo (consulta general)');
+            $lineas[] = 'Modelo elegido: ' . ($c->equipo?->nombre ?? 'Sin modelo (consulta general)');
             $lineas[] = '';
             $lineas[] = 'Equipos a respaldar:';
 
@@ -124,7 +123,6 @@ class CotizacionesAll extends Component
             $lineas[] = '';
         }
 
-        // Ítems cotizados (manual, o web con generador / servicios agregados)
         if ($c->detalles && $c->detalles->count() > 0) {
             $lineas[] = 'Ítems cotizados:';
             foreach ($c->detalles as $d) {
@@ -151,7 +149,7 @@ class CotizacionesAll extends Component
         }
 
         $mensaje = 'Hola' . ($nombre ? " {$nombre}" : '')
-            . ', le escribimos por su solicitud de cotización de generador. '
+            . ', le escribimos por su solicitud de cotización de equipo. '
             . '¿Podemos coordinar los detalles para enviarle su proforma?';
 
         return "https://wa.me/{$numero}?text=" . rawurlencode($mensaje);
@@ -160,7 +158,7 @@ class CotizacionesAll extends Component
     public function render()
     {
         $cotizaciones = Cotizacion::query()
-            ->with(['entorno', 'generador', 'detalles'])
+            ->with(['entorno', 'equipo', 'detalles'])
             ->when($this->search, function ($q) {
                 $q->where(function ($q) {
                     $q->where('nombre_cliente', 'like', "%{$this->search}%")

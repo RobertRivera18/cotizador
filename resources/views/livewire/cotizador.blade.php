@@ -326,6 +326,9 @@
                         <p class="text-xs text-gray-500 mt-1">
                             Precio: {{ $generador->precio ? '$'.number_format($generador->precio, 2) : 'Consultar' }}
                         </p>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Fases: {{ $generador->fases}}
+                        </p>
                         <button type="button" wire:click="abrirModalCotizacion({{ $generador->id }})"
                             class="mt-3 text-xs font-semibold text-blue-600 hover:text-blue-800">
                             Detalles / Cotizar →

@@ -4,34 +4,35 @@ namespace App\Livewire;
 
 use App\Models\Cotizacion;
 use App\Models\CotizacionDetalle;
-use App\Models\Generador;
 use App\Models\Entorno;
-use Livewire\Component;
+use App\Models\Equipo;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Livewire\Component;
 
 class CotizacionCreate extends Component
 {
+    public const TIPOS = [
+        'generador' => 'Generador',
+        'bateria'   => 'Batería',
+    ];
+
     public $nombre_cliente = '';
     public $telefono = '';
     public $email = '';
     public $cedula_ruc = '';
     public $entorno_id = null;
-    public $generadores = [];
-    public $entornos = [];
+    public array $items = [];
 
-    public $items = [];
-
-    public function mount()
+    public function mount(): void
     {
-        $this->generadores = Generador::where('activo', true)->get();
-        $this->entornos = Entorno::all();
         $this->agregarFila();
     }
 
-    public function agregarFila()
+    public function agregarFila(): void
     {
         $this->items[] = [
-            'generador_id'    => '',
+            'equipo_id'       => '',
             'descripcion'     => '',
             'cantidad'        => 1,
             'precio_unitario' => 0.00,
@@ -39,38 +40,40 @@ class CotizacionCreate extends Component
         ];
     }
 
-    public function eliminarFila($index)
+    public function eliminarFila($index): void
     {
         unset($this->items[$index]);
         $this->items = array_values($this->items);
     }
 
-    public function updatedItems($value, $key)
+    public function updatedItems($value, $key): void
     {
         $parts = explode('.', $key);
-        if (count($parts) === 2) {
-            $index = $parts[0];
-            $campo = $parts[1];
 
-            if ($campo === 'generador_id' && !empty($value)) {
-                $generador = Generador::find($value);
-                if ($generador) {
-                    $this->items[$index]['descripcion'] = $generador->nombre ?? $generador->modelo;
-                    $this->items[$index]['precio_unitario'] = $generador->precio ?? 0.00;
-                }
-            }
-
-            $cant = (float) ($this->items[$index]['cantidad'] ?? 0);
-            $precio = (float) ($this->items[$index]['precio_unitario'] ?? 0);
-            $this->items[$index]['subtotal'] = round($cant * $precio, 2);
+        if (count($parts) !== 2) {
+            return;
         }
+        
+        [$index, $campo] = $parts;
+        if ($campo === 'equipo_id' && !empty($value)) {
+            $equipo = Equipo::where('activo', true)->find($value);
+
+            if ($equipo) {
+                $this->items[$index]['descripcion']     = $equipo->nombre;
+                $this->items[$index]['precio_unitario'] = $equipo->precio ?? 0.00;
+            }
+        }
+
+        $cant   = (float) ($this->items[$index]['cantidad'] ?? 0);
+        $precio = (float) ($this->items[$index]['precio_unitario'] ?? 0);
+        $this->items[$index]['subtotal'] = round($cant * $precio, 2);
     }
 
-    public function getTotalProperty()
+    public function getTotalProperty(): float
     {
         return array_reduce($this->items, function ($carry, $item) {
             return $carry + ((float) ($item['cantidad'] ?? 0) * (float) ($item['precio_unitario'] ?? 0));
-        }, 0);
+        }, 0.0);
     }
 
     public function guardar()
@@ -79,18 +82,19 @@ class CotizacionCreate extends Component
             'nombre_cliente'          => 'required|string|max:255',
             'telefono'                => 'nullable|string|max:50',
             'email'                   => 'nullable|email|max:255',
-            'cedula_ruc'                => 'nullable|digits_between:10,13',
+            'cedula_ruc'              => 'nullable|digits_between:10,13',
             'entorno_id'              => 'nullable|exists:entornos,id',
             'items'                   => 'required|array|min:1',
+            'items.*.equipo_id'       => ['nullable', Rule::exists('equipos', 'id')->where('activo', true)],
             'items.*.descripcion'     => 'required|string|max:255',
             'items.*.cantidad'        => 'required|integer|min:1',
             'items.*.precio_unitario' => 'required|numeric|min:0',
-            'items.*.generador_id'    => 'nullable',
         ], [
             'nombre_cliente.required'      => 'El nombre del cliente es obligatorio.',
             'items.required'               => 'Debe agregar al menos un ítem a la cotización.',
             'items.*.descripcion.required' => 'La descripción del ítem es obligatoria.',
             'items.*.cantidad.required'    => 'La cantidad debe ser al menos 1.',
+            'items.*.equipo_id.exists'     => 'El equipo seleccionado ya no está disponible.',
         ]);
 
         DB::transaction(function () {
@@ -108,21 +112,30 @@ class CotizacionCreate extends Component
             foreach ($this->items as $item) {
                 CotizacionDetalle::create([
                     'cotizacion_id'   => $cotizacion->id,
-                    'generador_id'    => !empty($item['generador_id']) ? $item['generador_id'] : null,
+                    'equipo_id'       => !empty($item['equipo_id']) ? $item['equipo_id'] : null,
                     'descripcion'     => $item['descripcion'],
                     'cantidad'        => $item['cantidad'],
                     'precio_unitario' => $item['precio_unitario'],
-                    'subtotal'        => $item['cantidad'] * $item['precio_unitario'],
+                    'subtotal'        => round($item['cantidad'] * $item['precio_unitario'], 2),
                 ]);
             }
         });
 
         session()->flash('message', 'Cotización manual creada con éxito.');
+
         return redirect()->route('admin.cotizaciones.index');
     }
 
     public function render()
     {
-        return view('livewire.cotizacion-create');
+        return view('livewire.cotizacion-create', [
+            'tipos'          => self::TIPOS,
+            'equiposPorTipo' => Equipo::where('activo', true)
+                ->orderBy('tipo')
+                ->orderBy('nombre')
+                ->get(['id', 'tipo', 'nombre', 'marca', 'precio', 'capacidad_kw', 'capacidad_kva', 'fases'])
+                ->groupBy('tipo'),
+            'entornos'       => Entorno::all(),
+        ]);
     }
 }
