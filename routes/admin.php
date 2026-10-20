@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Livewire\Generadores;
+use App\Livewire\GestorEquipos;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -44,3 +45,5 @@ Route::get('/cotizaciones/{cotizacion}/edit', [CotizacionController::class, 'edi
 Route::get('/cotizaciones/{id}/pdf', [CotizacionController::class, 'descargarPdf'])
     ->middleware('can:Descargar PDF cotizaciones')
     ->name('admin.cotizaciones.pdf');
+
+Route::get('/electricos', GestorEquipos::class)->name('admin.equiposelectricos.index');

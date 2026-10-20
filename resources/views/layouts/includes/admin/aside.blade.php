@@ -18,6 +18,13 @@ $links = [
                 'icon' => 'fas fa-bolt',
                 'can' => ['Gestion de generadores'],
             ],
+
+            [
+                'name' => 'Equipos Electricos',
+                'url' => route('admin.equiposelectricos.index'),
+                'active' => request()->routeIs('admin.equiposelectricos.index'),
+                'icon' => 'fas fa-bolt',
+            ],
             [
                 'name' => 'Cotizaciones',
                 'url' => route('admin.cotizaciones.index'),
