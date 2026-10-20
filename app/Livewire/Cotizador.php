@@ -308,7 +308,7 @@ class Cotizador extends Component
 
         $duplicada = Cotizacion::where('telefono', $this->telefono)
             ->where('entorno_id', $this->entorno_id)
-            ->where('generador_id', $this->generadorSeleccionado)
+            ->where('equipo_id', $this->generadorSeleccionado)
             ->where('created_at', '>=', now()->subMinutes(10))
             ->exists();
 
@@ -327,7 +327,7 @@ class Cotizador extends Component
         DB::transaction(function () use ($resultado, $generador) {
             $cotizacion = Cotizacion::create([
                 'entorno_id'                => $this->entorno_id,
-                'generador_id'              => $generador?->id,
+                'equipo_id'              => $generador?->id,
                 'equipos_json'              => $this->equiposActivos()->map(fn(EquipoElectrico $e) => [
                     'id'    => $e->id,
                     'nombre'    => $e->nombre,
@@ -349,7 +349,7 @@ class Cotizador extends Component
                 $precio = (float) ($generador->precio ?? 0);
 
                 $cotizacion->detalles()->create([
-                    'generador_id'    => $generador->id,
+                    'equipo_id'    => $generador->id,
                     'descripcion'     => $generador->nombre ?? $generador->modelo,
                     'cantidad'        => 1,
                     'precio_unitario' => $precio,

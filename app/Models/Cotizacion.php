@@ -12,7 +12,7 @@ class Cotizacion extends Model
 
     protected $fillable = [
         'entorno_id',
-        'generador_id', // Si prefieres cambiar esta columna en tu BD a equipo_id, recuerda actualizarla también aquí
+        'equipo_id',
         'equipos_json',
         'potencia_total_w',
         'capacidad_recomendada_kva',
@@ -35,7 +35,7 @@ class Cotizacion extends Model
 
     public function equipo(): BelongsTo
     {
-        return $this->belongsTo(Equipo::class, 'generador_id');
+        return $this->belongsTo(Equipo::class, 'equipo_id');
     }
 
     public function entorno(): BelongsTo

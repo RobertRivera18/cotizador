@@ -45,9 +45,10 @@
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            width: 190px;
+            width: 250px;
         }
-        .company-ruc { font-size: 12px; font-weight: bold; margin-top: 4px; }
+        .company-ruc { font-size: 11px; font-weight: bold; margin-top: 2px; }
+        .company-address { font-size: 8.5px; color: #444; margin-top: 2px; line-height: 1.2; }
         .logo { height: 62px; }
 
         /* ===== TITULO ===== */
@@ -88,7 +89,7 @@
         .items td.num { color: #b45309; }
         .items td.money { color: #1e3a8a; text-align: right; }
         .items .prod { text-transform: uppercase; text-align: left; }
-        .items .prod .spec { font-size: 8.5px; color: #444; margin-top: 3px; }
+        .items .prod .spec { font-size: 8.5px; color: #444; margin-top: 3px; font-weight: normal; }
 
         /* ===== TOTALES ===== */
         .totals-wrap { width: 100%; }
@@ -137,6 +138,9 @@
                     DISEIN Distribuidora y Suministros Eléctricos Industriales
                 </div>
                 <div class="company-ruc">RUC {{ '0991307842001' }}</div>
+                <div class="company-address">
+                    <strong>DIRECCIÓN:</strong> 5° Pasaje 38 B Vergeles, MZ 169, Guayaquil
+                </div>
             </td>
             <td style="text-align: right;">
                 @if ($logoSrc)
@@ -166,13 +170,13 @@
             <td class="val">{{ $cotizacion->telefono ?: '' }}</td>
         </tr>
         <tr>
-            <td class="lbl">RUC:</td>
+            <td class="lbl">RUC / C.I.:</td>
             <td class="val">{{ $cotizacion->cedula_ruc ?? '' }}</td>
             <td class="lbl">TELÉFONO:</td>
             <td class="val">(04) 3916000</td>
         </tr>
         <tr>
-            <td class="lbl">DIRECCIÓN:</td>
+            <td class="lbl">DIR. CLIENTE:</td>
             <td class="val">{{ strtoupper($cotizacion->direccion ?? 'GUAYAQUIL') }}</td>
             <td class="lbl">EXTENSIÓN:</td>
             <td class="val">5000</td>
@@ -198,16 +202,26 @@
         </thead>
         <tbody>
             @foreach ($cotizacion->detalles as $i => $d)
+                @php
+                    $item = $d->equipo ?? $d->generador ?? null;
+
+                    $marca = $item?->marca ?? $d->marca ?? null;
+                    $fases = $item?->fases ?? $d->fases ?? null;
+                    $combustible = $item?->combustible ?? $d->combustible ?? null;
+                    $potencia = $item?->capacidad_kw ?? $item?->potencia_nominal_w ?? $d->potencia ?? null;
+                @endphp
                 <tr>
                     <td class="num">{{ $i + 1 }}</td>
                     <td class="num">{{ $d->cantidad }}</td>
                     <td class="prod">
                         {{ $d->descripcion }}
-                        @if ($d->generador)
+
+                        @if ($marca || $fases || $combustible || $potencia)
                             <div class="spec">
-                                MARCA: {{ $d->generador->marca ?? 'N/A' }}
-                                &nbsp;|&nbsp; FASE: {{ $d->generador->fases ?? 'N/A' }}
-                                &nbsp;|&nbsp; POTENCIA: {{ $d->generador->capacidad_kw }} KW
+                                @if($marca) MARCA: {{ $marca }} &nbsp;|&nbsp; @endif
+                                @if($fases) FASES: {{ $fases }} &nbsp;|&nbsp; @endif
+                                @if($combustible) COMBUSTIBLE: {{ strtoupper($combustible) }} &nbsp;|&nbsp; @endif
+                                @if($potencia) POTENCIA: {{ $potencia }} {{ is_numeric($potencia) && $potencia > 1000 ? 'W' : 'KW' }} @endif
                             </div>
                         @endif
                     </td>
@@ -268,6 +282,7 @@
     <div class="bank-info">
         <strong>NOMBRE:</strong> DISEIN DISTRIBUIDORA Y SUMINISTROS ELECTRICOS INDUSTRIALES CIA. LTDA.<br>
         <strong>RUC 0991307842001</strong><br>
+        <strong>DIRECCIÓN:</strong> 5° Pasaje 38 B Vergeles, MZ 169, Guayaquil<br>
         email: contabilidad@diseinelectric.com
     </div>
 

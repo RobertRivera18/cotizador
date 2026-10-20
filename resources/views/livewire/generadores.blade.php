@@ -4,7 +4,6 @@
     </style>
 
     @php
-        // ---------- Helpers de presentación ----------
         $tipos = [
             'generador' => ['label' => 'Generador', 'icon' => 'fa-bolt', 'badge' => 'bg-amber-50 text-amber-700 ring-amber-600/20'],
             'bateria'   => ['label' => 'Batería', 'icon' => 'fa-battery-three-quarters', 'badge' => 'bg-sky-50 text-sky-700 ring-sky-600/20'],
@@ -15,7 +14,6 @@
         $num    = fn ($v) => ($v === null || $v === '') ? null : rtrim(rtrim(number_format((float) $v, 2, '.', ''), '0'), '.');
         $dinero = fn ($v) => $v !== null ? '$' . number_format((float) $v, 2) : '—';
 
-        // ---------- Clases reutilizables del formulario ----------
         $lbl   = 'block text-xs font-semibold text-gray-700 mb-1.5';
         $sec   = 'text-[11px] font-semibold uppercase tracking-wider text-gray-400';
         $input = 'w-full bg-gray-50/50 border rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:bg-white focus:outline-none focus:ring-1 transition-colors';
@@ -24,7 +22,6 @@
         $cls   = fn (string $campo) => $input . ' ' . ($errors->has($campo) ? $bad : $ok);
     @endphp
 
-    {{-- ================= Encabezado ================= --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-gray-100">
         <div>
             <h1 class="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">Equipos</h1>
@@ -57,9 +54,7 @@
         </div>
     </div>
 
-    {{-- ================= Listado ================= --}}
     <div>
-        {{-- Tabla (desktop) --}}
         <div class="hidden md:block bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-2xs">
             <table class="min-w-full text-sm text-left">
                 <thead
@@ -180,7 +175,6 @@
             </table>
         </div>
 
-        {{-- Tarjetas (móvil) --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:hidden">
             @forelse ($generadores as $g)
                 @php
@@ -282,15 +276,12 @@
 
     {{-- ================= Modal crear/editar ================= --}}
     @if ($modalForm)
-        {{-- `tipo` se sincroniza con Livewire (entangle): los campos cambian al instante, sin esperar al servidor --}}
         <div x-data="{ tipo: $wire.entangle('tipo') }" x-init="$nextTick(() => $refs.nombre?.focus())"
             @keydown.escape.window="$wire.cerrarModal()"
             class="fixed inset-0 bg-gray-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto"
             wire:click.self="cerrarModal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
             <div
                 class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden my-auto border border-gray-100 flex flex-col max-h-[90vh]">
-
-                {{-- Header fijo --}}
                 <div
                     class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 flex-shrink-0">
                     <div>
@@ -307,11 +298,8 @@
                     </button>
                 </div>
 
-                {{-- Formulario con scroll interno --}}
                 <form wire:submit="guardar" class="flex flex-col flex-1 overflow-hidden" novalidate>
                     <div class="p-6 overflow-y-auto space-y-6 flex-1">
-
-                        {{-- 1. Tipo de equipo (control segmentado: opciones siempre visibles) --}}
                         <fieldset>
                             <legend class="{{ $lbl }}">Tipo de equipo <span class="text-red-500" aria-hidden="true">*</span></legend>
                             <div class="grid grid-cols-2 gap-3">
@@ -340,7 +328,6 @@
                             @enderror
                         </fieldset>
 
-                        {{-- 2. Información general --}}
                         <section aria-labelledby="sec-general" class="space-y-3">
                             <h3 id="sec-general" class="{{ $sec }}">Información general</h3>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -370,16 +357,13 @@
                             </div>
                         </section>
 
-                        {{-- 3. Especificaciones + Imagen --}}
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
 
-                            {{-- Columna izquierda: especificaciones y precio --}}
                             <div class="md:col-span-7 space-y-6">
                                 <section aria-labelledby="sec-specs" class="space-y-3">
                                     <h3 id="sec-specs" class="{{ $sec }}">Especificaciones técnicas</h3>
 
                                     <div class="grid grid-cols-2 gap-3">
-                                        {{-- kVA: opcional en todos los tipos --}}
                                         <div>
                                             <label for="capacidad_kva" class="{{ $lbl }}">Capacidad kVA <span class="text-gray-400 font-normal">(opcional)</span></label>
                                             <div class="relative">
@@ -394,7 +378,6 @@
                                             @enderror
                                         </div>
 
-                                        {{-- kW: obligatorio solo en generadores --}}
                                         <div>
                                             <label for="capacidad_kw" class="{{ $lbl }}">
                                                 Capacidad kW
@@ -413,7 +396,6 @@
                                             @enderror
                                         </div>
 
-                                        {{-- Solo generadores: fases y combustible --}}
                                         <div x-show="tipo === 'generador'" x-transition.opacity.duration.150ms
                                             class="contents">
                                             <div>
@@ -445,7 +427,6 @@
                                             </div>
                                         </div>
 
-                                        {{-- Aviso para baterías: explica por qué faltan campos --}}
                                         <p x-show="tipo === 'bateria'" x-cloak
                                             class="col-span-2 flex items-start gap-2 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-700">
                                             <i class="fa-solid fa-circle-info mt-0.5"></i>
@@ -472,7 +453,6 @@
                                 </section>
                             </div>
 
-                            {{-- Columna derecha: imagen y disponibilidad --}}
                             <div class="md:col-span-5 space-y-6">
                                 <section aria-labelledby="sec-imagen" class="space-y-3">
                                     <h3 id="sec-imagen" class="{{ $sec }}">Fotografía</h3>
@@ -554,7 +534,6 @@
                             </div>
                         </div>
 
-                        {{-- 4. Descripción (ancho completo) --}}
                         @php
                             $descripcionInicial = (string) ($descripcion ?? '');
                             if ($descripcionInicial !== '' && !preg_match('/<[a-z][\s\S]*>/i', $descripcionInicial)) {
@@ -600,7 +579,6 @@
                         </section>
                     </div>
 
-                    {{-- Footer fijo con acciones siempre visibles --}}
                     <div
                         class="flex items-center gap-2.5 px-6 py-3.5 border-t border-gray-100 bg-gray-50/50 flex-shrink-0">
                         <p class="hidden sm:block mr-auto text-xs text-gray-400">
@@ -628,7 +606,6 @@
         </div>
     @endif
 
-    {{-- SweetAlert: notificaciones y confirmación de eliminación --}}
     @script
         <script>
             $wire.on('swal', (e) => {
