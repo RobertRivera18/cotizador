@@ -303,7 +303,7 @@ class Cotizador extends Component
             'nombre_cliente' => 'required|string|max:120',
             'telefono' => 'required|string|max:30',
             'email' => 'nullable|email|max:150',
-            'generadorSeleccionado' => 'nullable|exists:equipos,id', // Actualizado a la tabla 'equipos'
+            'generadorSeleccionado' => 'nullable|exists:equipos,id',
         ]);
 
         $duplicada = Cotizacion::where('telefono', $this->telefono)

@@ -5,9 +5,11 @@
 
     @php
         $tipos = [
-            'generador' => ['label' => 'Generador', 'icon' => 'fa-bolt', 'badge' => 'bg-amber-50 text-amber-700 ring-amber-600/20'],
-            'bateria'   => ['label' => 'Batería', 'icon' => 'fa-battery-three-quarters', 'badge' => 'bg-sky-50 text-sky-700 ring-sky-600/20'],
-        ];
+           'generador'   => ['label' => 'Generador', 'icon' => 'fa-bolt', 'badge' => 'bg-amber-50 text-amber-700 ring-amber-600/20'],
+           'bateria'     => ['label' => 'Batería', 'icon' => 'fa-battery-three-quarters', 'badge' => 'bg-sky-50 text-sky-700 ring-sky-600/20'],
+           'inversor'    => ['label' => 'Inversor', 'icon' => 'fa-exchange-alt', 'badge' => 'bg-purple-50 text-purple-700 ring-purple-600/20'],
+           'panel solar' => ['label' => 'Panel Solar', 'icon' => 'fa-solar-panel', 'badge' => 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'],
+                 ];
         $fasesLbl = ['monofasico' => 'Monofásico', 'trifasico' => 'Trifásico'];
         $combLbl  = ['gasolina' => 'Gasolina', 'diesel' => 'Diésel', 'gas' => 'Gas'];
 

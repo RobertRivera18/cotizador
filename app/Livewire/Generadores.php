@@ -13,7 +13,7 @@ class Generadores extends Component
     use WithFileUploads, WithPagination;
 
     public ?int $equipoId = null;
-    public string $tipo = 'generador'; // 'generador' o 'bateria'
+    public string $tipo = 'generador';
     public string $nombre = '';
     public $capacidad_kva = '';
     public $capacidad_kw = '';
@@ -26,14 +26,13 @@ class Generadores extends Component
     public $imagen = null;
     public ?string $imagenActual = null;
 
-    
     public string $search = '';
     public bool $modalForm = false;
 
     protected function rules(): array
     {
         $rules = [
-            'tipo'          => 'required|in:generador,bateria',
+            'tipo'          => 'required|in:generador,bateria,inversor,panel solar',
             'nombre'        => 'required|string|max:255',
             'marca'         => 'nullable|string|max:255',
             'precio'        => 'nullable|numeric|min:0|max:99999999.99',
@@ -48,6 +47,7 @@ class Generadores extends Component
             $rules['fases']         = 'required|string|max:255';
             $rules['combustible']   = 'required|in:gasolina,diesel,gas';
         } else {
+            // Para batería, inversor y panel solar se manejan como opcionales o específicos según tus necesidades
             $rules['capacidad_kva'] = 'nullable|numeric|min:0|max:999999.99';
             $rules['capacidad_kw']  = 'nullable|numeric|min:0|max:999999.99';
             $rules['fases']         = 'nullable|string|max:255';
@@ -70,7 +70,6 @@ class Generadores extends Component
     public function crear(): void
     {
         $this->autorizar();
-
         $this->resetFormulario();
         $this->modalForm = true;
     }
@@ -108,7 +107,8 @@ class Generadores extends Component
         $datos['precio'] = $datos['precio'] === '' ? null : $datos['precio'];
         $datos['descripcion'] = $this->limpiarHtml($datos['descripcion']);
 
-        if ($datos['tipo'] === 'bateria') {
+        // Si el tipo no es generador, limpiamos campos que aplican solo a generadores
+        if ($datos['tipo'] !== 'generador') {
             $datos['combustible'] = null;
             $datos['fases'] = null;
             $datos['capacidad_kva'] = $datos['capacidad_kva'] === '' ? null : $datos['capacidad_kva'];
@@ -211,7 +211,7 @@ class Generadores extends Component
             ->when($this->search, fn($q) => $q->where('nombre', 'like', "%{$this->search}%")
                 ->orWhere('marca', 'like', "%{$this->search}%"))
             ->latest()
-            ->paginate(5);
+            ->paginate(15);
 
         return view('livewire.generadores', compact('generadores'))->layout('layouts.admin');
     }

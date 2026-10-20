@@ -1,18 +1,18 @@
 @php
-    // Número sin ceros sobrantes: 10.00 -> 10, 2.50 -> 2.5
-    $fmt = fn ($v) => rtrim(rtrim(number_format((float) $v, 2, '.', ''), '0'), '.');
+// Número sin ceros sobrantes: 10.00 -> 10, 2.50 -> 2.5
+$fmt = fn ($v) => rtrim(rtrim(number_format((float) $v, 2, '.', ''), '0'), '.');
 
-    // Texto de cada opción del selector. Solo usa columnas que existen en `equipos`;
-    // las fases se muestran únicamente en generadores.
-    $etiquetaEquipo = function ($e) use ($fmt) {
-        return implode(' — ', array_filter([
-            $e->nombre,
-            $e->marca,
-            $e->capacidad_kw !== null ? $fmt($e->capacidad_kw) . ' kW' : null,
-            $e->capacidad_kva !== null ? $fmt($e->capacidad_kva) . ' kVA' : null,
-            $e->tipo === 'generador' && $e->fases ? ucfirst($e->fases) : null,
-        ]));
-    };
+// Texto de cada opción del selector. Solo usa columnas que existen en `equipos`;
+// las fases se muestran únicamente en generadores.
+$etiquetaEquipo = function ($e) use ($fmt) {
+return implode(' — ', array_filter([
+$e->nombre,
+$e->marca,
+$e->capacidad_kw !== null ? $fmt($e->capacidad_kw) . ' kW' : null,
+$e->capacidad_kva !== null ? $fmt($e->capacidad_kva) . ' kVA' : null,
+$e->tipo === 'generador' && $e->fases ? ucfirst($e->fases) : null,
+]));
+};
 @endphp
 
 <div class="max-w-7xl mx-auto p-6 bg-white rounded-xl shadow-sm border border-gray-100 space-y-6">
@@ -31,34 +31,43 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
             <div>
                 <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Nombre del Cliente *</label>
-                <input type="text" maxlength="255" wire:model.blur="nombre_cliente" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Ej: Juan Pérez / Empresa S.A.">
+                <input type="text" maxlength="255" wire:model.blur="nombre_cliente"
+                    class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Ej: Juan Pérez / Empresa S.A.">
                 @error('nombre_cliente') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
             </div>
 
             <div>
                 <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Teléfono</label>
-                <input type="text" maxlength="50" inputmode="tel" wire:model.blur="telefono" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Ej: +593 999 999 999">
+                <input type="text" maxlength="50" inputmode="tel" wire:model.blur="telefono"
+                    class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Ej: +593 999 999 999">
                 @error('telefono') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
             </div>
 
             <div>
                 <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Email</label>
-                <input type="email" maxlength="255" wire:model.blur="email" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="cliente@correo.com">
+                <input type="email" maxlength="255" wire:model.blur="email"
+                    class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="cliente@correo.com">
                 @error('email') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
             </div>
 
             <div>
                 <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Cédula/RUC</label>
-                <input type="text" inputmode="numeric" maxlength="13" wire:model.blur="cedula_ruc" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="10 dígitos (cédula) o 13 (RUC)">
+                <input type="text" inputmode="numeric" maxlength="13" wire:model.blur="cedula_ruc"
+                    class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="10 dígitos (cédula) o 13 (RUC)">
                 @error('cedula_ruc') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
             </div>
 
             <div class="md:col-span-1">
                 <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Entorno (Opcional)</label>
-                <select wire:model="entorno_id" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                <select wire:model="entorno_id"
+                    class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">Seleccionar entorno...</option>
                     @foreach($entornos as $entorno)
-                        <option value="{{ $entorno->id }}">{{ $entorno->nombre }}</option>
+                    <option value="{{ $entorno->id }}">{{ $entorno->nombre }}</option>
                     @endforeach
                 </select>
                 @error('entorno_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
@@ -69,7 +78,8 @@
         <div class="space-y-3">
             <div class="flex justify-between items-center">
                 <h3 class="text-md font-bold text-gray-700">Ítems de la Cotización</h3>
-                <button type="button" wire:click="agregarFila" class="inline-flex items-center gap-1 text-xs bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg font-medium hover:bg-indigo-100 transition">
+                <button type="button" wire:click="agregarFila"
+                    class="inline-flex items-center gap-1 text-xs bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg font-medium hover:bg-indigo-100 transition">
                     <i class="fa-solid fa-plus"></i> Agregar Línea
                 </button>
             </div>
@@ -88,46 +98,57 @@
                     </thead>
                     <tbody class="divide-y divide-gray-200">
                         @foreach($items as $index => $item)
-                            <tr wire:key="item-{{ $index }}">
-                                <td class="p-2 align-top">
-                                    {{-- Todos los equipos (generadores y baterías), agrupados por tipo. Es .live, elegirlo rellena descripción y precio --}}
-                                    <select wire:model.live="items.{{ $index }}.equipo_id"
-                                        aria-label="Equipo"
-                                        class="w-full text-xs border-gray-300 rounded-md">
-                                        <option value="">Personalizado / Otro</option>
-                                        @foreach($equiposPorTipo as $tipoClave => $lista)
-                                            <optgroup label="{{ $tipos[$tipoClave] ?? ucfirst($tipoClave) }}">
-                                                @foreach($lista as $equipo)
-                                                    <option value="{{ $equipo->id }}">{{ $etiquetaEquipo($equipo) }}</option>
-                                                @endforeach
-                                            </optgroup>
+                        <tr wire:key="item-{{ $index }}">
+                            <td class="p-2 align-top">
+                                {{-- Todos los equipos (generadores y baterías), agrupados por tipo. Es .live, elegirlo
+                                rellena descripción y precio --}}
+                                <select wire:model.live="items.{{ $index }}.equipo_id" aria-label="Equipo"
+                                    class="w-full text-xs border-gray-300 rounded-md">
+                                    <option value="">Personalizado / Otro</option>
+                                    @foreach($equiposPorTipo as $tipoClave => $lista)
+                                    <optgroup label="{{ $tipos[$tipoClave] ?? ucfirst($tipoClave) }}">
+                                        @foreach($lista as $equipo)
+                                        <option value="{{ $equipo->id }}">{{ $etiquetaEquipo($equipo) }}</option>
                                         @endforeach
-                                    </select>
-                                    @error("items.$index.equipo_id") <span class="text-red-500 text-[10px] block">{{ $message }}</span> @enderror
-                                </td>
-                                <td class="p-2 align-top">
-                                    <input type="text" maxlength="255" wire:model.blur="items.{{ $index }}.descripcion" placeholder="Ej: Generador Diésel 20kVA + Tablero ATS" class="w-full text-xs border-gray-300 rounded-md">
-                                    @error("items.$index.descripcion") <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
-                                </td>
-                                <td class="p-2 align-top">
-                                    <input type="number" min="1" max="9999" step="1" inputmode="numeric" wire:model.blur="items.{{ $index }}.cantidad" class="w-full text-xs border-gray-300 rounded-md text-center">
-                                    @error("items.$index.cantidad") <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
-                                </td>
-                                <td class="p-2 align-top">
-                                    <input type="number" min="0" step="0.01" inputmode="decimal" wire:model.blur="items.{{ $index }}.precio_unitario" class="w-full text-xs border-gray-300 rounded-md text-right">
-                                    @error("items.$index.precio_unitario") <span class="text-red-500 text-[10px]">{{ $message }}</span> @enderror
-                                </td>
-                                <td class="p-2 align-top text-right font-medium text-gray-900 pt-3">
-                                    ${{ number_format((float)($items[$index]['subtotal'] ?? 0), 2) }}
-                                </td>
-                                <td class="p-2 align-top text-center pt-3">
-                                    @if(count($items) > 1)
-                                        <button type="button" wire:click="eliminarFila({{ $index }})" aria-label="Eliminar línea" class="text-red-500 hover:text-red-700">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    @endif
-                                </td>
-                            </tr>
+                                    </optgroup>
+                                    @endforeach
+                                </select>
+                                @error("items.$index.equipo_id") <span class="text-red-500 text-[10px] block">{{
+                                    $message }}</span> @enderror
+                            </td>
+                            <td class="p-2 align-top">
+                                <input type="text" maxlength="255" wire:model.blur="items.{{ $index }}.descripcion"
+                                    placeholder="Ej: Generador Diésel 20kVA + Tablero ATS"
+                                    class="w-full text-xs border-gray-300 rounded-md">
+                                @error("items.$index.descripcion") <span class="text-red-500 text-[10px]">{{ $message
+                                    }}</span> @enderror
+                            </td>
+                            <td class="p-2 align-top">
+                                <input type="number" min="1" max="9999" step="1" inputmode="numeric"
+                                    wire:model.blur="items.{{ $index }}.cantidad"
+                                    class="w-full text-xs border-gray-300 rounded-md text-center">
+                                @error("items.$index.cantidad") <span class="text-red-500 text-[10px]">{{ $message
+                                    }}</span> @enderror
+                            </td>
+                            <td class="p-2 align-top">
+                                <input type="number" min="0" step="0.01" inputmode="decimal"
+                                    wire:model.blur="items.{{ $index }}.precio_unitario"
+                                    class="w-full text-xs border-gray-300 rounded-md text-right">
+                                @error("items.$index.precio_unitario") <span class="text-red-500 text-[10px]">{{
+                                    $message }}</span> @enderror
+                            </td>
+                            <td class="p-2 align-top text-right font-medium text-gray-900 pt-3">
+                                ${{ number_format((float)($items[$index]['subtotal'] ?? 0), 2) }}
+                            </td>
+                            <td class="p-2 align-top text-center pt-3">
+                                @if(count($items) > 1)
+                                <button type="button" wire:click="eliminarFila({{ $index }})"
+                                    aria-label="Eliminar línea" class="text-red-500 hover:text-red-700">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                                @endif
+                            </td>
+                        </tr>
                         @endforeach
                     </tbody>
                 </table>
@@ -136,13 +157,15 @@
         </div>
 
         <!-- SECCIÓN 3: TOTAL Y BOTÓN DE GUARDAR -->
-        <div class="flex flex-col sm:flex-row justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <div
+            class="flex flex-col sm:flex-row justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-200">
             <div class="text-lg font-bold text-gray-800">
                 Total Cotización: <span class="text-indigo-600">${{ number_format($this->total, 2) }}</span>
             </div>
 
             <div class="mt-3 sm:mt-0 flex gap-3">
-                <a href="{{ route('admin.cotizaciones.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition">
+                <a href="{{ route('admin.cotizaciones.index') }}"
+                    class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition">
                     Cancelar
                 </a>
                 <button type="submit" wire:loading.attr="disabled" wire:target="guardar"
@@ -154,4 +177,103 @@
             </div>
         </div>
     </form>
+
+
+
+  ```blade
+@script
+<script>
+    Livewire.on('validacion-fallida', (event) => {
+        const errores = event.errores ?? event.detail?.errores ?? [];
+
+        if (!errores.length) return;
+
+        const escapeHtml = (text) => {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        };
+
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            showCloseButton: true,
+            timer: 4500,
+            timerProgressBar: true,
+            width: '370px',
+            padding: '14px 16px',
+            background: '#ffffff',
+            color: '#374151',
+            iconColor: '#d97706',
+            customClass: {
+                popup: 'validation-toast',
+                title: 'validation-toast-title',
+                htmlContainer: 'validation-toast-content',
+                closeButton: 'validation-toast-close',
+                timerProgressBar: 'validation-toast-progress'
+            },
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
+            }
+        });
+
+        Toast.fire({
+            icon: 'warning',
+            title: errores.length === 1
+                ? 'Revisa un campo'
+                : `Revisa ${errores.length} campos`,
+            html: `
+                <div style="
+                    font-size: 12px;
+                    line-height: 1.5;
+                    color: #6b7280;
+                    text-align: left;
+                ">
+                    ${errores.map(error => `
+                        <div style="margin-top: 4px;">
+                            • ${escapeHtml(error)}
+                        </div>
+                    `).join('')}
+                </div>
+            `
+        });
+    });
+</script>
+@endscript
+
+@push('css')
+<style>
+    .validation-toast {
+        border: 1px solid #f3f4f6 !important;
+        border-radius: 12px !important;
+        box-shadow: 0 6px 24px rgba(0, 0, 0, .08) !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+            sans-serif !important;
+    }
+
+    .validation-toast-title {
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        text-align: left !important;
+        margin-bottom: 3px !important;
+    }
+
+    .validation-toast-content {
+        margin: 0 !important;
+    }
+
+    .validation-toast-close {
+        color: #9ca3af !important;
+    }
+
+    .validation-toast-progress {
+        background: #d97706 !important;
+        height: 3px !important;
+    }
+</style>
+@endpush
+```
+
 </div>

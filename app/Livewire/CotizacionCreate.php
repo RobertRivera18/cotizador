@@ -53,7 +53,7 @@ class CotizacionCreate extends Component
         if (count($parts) !== 2) {
             return;
         }
-        
+
         [$index, $campo] = $parts;
         if ($campo === 'equipo_id' && !empty($value)) {
             $equipo = Equipo::where('activo', true)->find($value);
@@ -116,16 +116,39 @@ class CotizacionCreate extends Component
                     'descripcion'     => $item['descripcion'],
                     'cantidad'        => $item['cantidad'],
                     'precio_unitario' => $item['precio_unitario'],
-                    'subtotal'        => round($item['cantidad'] * $item['precio_unitario'], 2),
+                    'subtotal'        => round(
+                        $item['cantidad'] * $item['precio_unitario'],
+                        2
+                    ),
                 ]);
             }
         });
 
-        session()->flash('message', 'Cotización manual creada con éxito.');
-
+        session()->flash('swal', [
+            'toast' => true,
+            'position' => 'top-end',
+            'icon' => 'success',
+            'title' => 'Cotización creada correctamente',
+            'showConfirmButton' => false,
+            'timer' => 3000,
+            'timerProgressBar' => true,
+        ]);
         return redirect()->route('admin.cotizaciones.index');
     }
 
+    public function boot(): void
+    {
+        $this->withValidator(function ($validator) {
+            $validator->after(function ($validator) {
+                if ($validator->errors()->isNotEmpty()) {
+                    $this->dispatch(
+                        'validacion-fallida',
+                        errores: $validator->errors()->all()
+                    );
+                }
+            });
+        });
+    }
     public function render()
     {
         return view('livewire.cotizacion-create', [
