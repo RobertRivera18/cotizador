@@ -1,4 +1,4 @@
-<div class="space-y-6">
+<div class="space-y-5 sm:space-y-6">
     <style>
         [x-cloak] { display: none !important; }
     </style>
@@ -18,19 +18,21 @@
 
         $lbl   = 'block text-xs font-semibold text-gray-700 mb-1.5';
         $sec   = 'text-[11px] font-semibold uppercase tracking-wider text-gray-400';
-        $input = 'w-full bg-gray-50/50 border rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:bg-white focus:outline-none focus:ring-1 transition-colors';
+        // text-base en móvil evita el zoom automático de iOS al enfocar un input
+        $input = 'w-full bg-gray-50/50 border rounded-lg px-3 py-2.5 sm:py-2 text-base sm:text-sm text-gray-900 placeholder:text-gray-400 focus:bg-white focus:outline-none focus:ring-1 transition-colors';
         $ok    = 'border-gray-200 focus:ring-gray-900 focus:border-gray-900';
         $bad   = 'border-red-300 bg-red-50/40 focus:ring-red-500 focus:border-red-500';
         $cls   = fn (string $campo) => $input . ' ' . ($errors->has($campo) ? $bad : $ok);
     @endphp
 
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-gray-100">
-        <div>
+    {{-- ================= Cabecera ================= --}}
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-4 border-b border-gray-100">
+        <div class="min-w-0">
             <h1 class="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">Equipos</h1>
             <p class="text-sm text-gray-500 mt-1">Inventario de generadores y baterías.</p>
         </div>
-        <div class="flex items-center gap-3 w-full sm:w-auto">
-            <div class="relative flex-1 sm:w-72">
+        <div class="flex items-center gap-2 sm:gap-3 w-full lg:w-auto">
+            <div class="relative flex-1 min-w-0 lg:w-72 lg:flex-none">
                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -39,16 +41,16 @@
                 </span>
                 <input type="text" wire:model.live.debounce.300ms="search" aria-label="Buscar equipos"
                     placeholder="Buscar por nombre o marca..."
-                    class="w-full pl-9 pr-9 py-2 bg-gray-50/50 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 transition-all">
+                    class="w-full pl-9 pr-9 py-2.5 sm:py-2 bg-gray-50/50 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-lg text-base sm:text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 transition-all">
                 @if ($search !== '')
                     <button type="button" wire:click="$set('search', '')" aria-label="Limpiar búsqueda"
-                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                        class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
                         <i class="fa-solid fa-xmark text-xs"></i>
                     </button>
                 @endif
             </div>
             <button wire:click="crear" type="button"
-                class="inline-flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-medium px-4 py-2 rounded-lg text-sm transition-all flex-shrink-0">
+                class="inline-flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-medium px-4 py-2.5 sm:py-2 rounded-lg text-sm transition-all flex-shrink-0">
                 <i class="fa-solid fa-plus text-xs"></i>
                 <span class="hidden sm:inline">Nuevo equipo</span>
                 <span class="sm:hidden">Nuevo</span>
@@ -57,127 +59,131 @@
     </div>
 
     <div>
-        <div class="hidden md:block bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-2xs">
-            <table class="min-w-full text-sm text-left">
-                <thead
-                    class="text-xs uppercase tracking-wider text-gray-400 font-medium border-b border-gray-100 bg-gray-50/50">
-                    <tr>
-                        <th scope="col" class="py-3.5 px-4">Equipo</th>
-                        <th scope="col" class="py-3.5 px-4">Tipo</th>
-                        <th scope="col" class="py-3.5 px-4">Capacidad</th>
-                        <th scope="col" class="py-3.5 px-4">Características</th>
-                        <th scope="col" class="py-3.5 px-4">Precio</th>
-                        <th scope="col" class="py-3.5 px-4">Estado</th>
-                        <th scope="col" class="py-3.5 px-4 text-right"><span class="sr-only">Acciones</span></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-50 text-gray-600">
-                    @forelse ($generadores as $g)
-                        @php
-                            $tipoKey = $g->tipo ?? 'generador';
-                            $t       = $tipos[$tipoKey] ?? $tipos['generador'];
-                            $esGen   = $tipoKey === 'generador';
-                            $kw      = $num($g->capacidad_kw);
-                            $kva     = $num($g->capacidad_kva);
-                        @endphp
-                        <tr class="hover:bg-gray-50/50 transition-colors" wire:key="gen-{{ $g->id }}">
-                            <td class="py-3 px-4">
-                                <div class="flex items-center gap-3 min-w-0">
-                                    @if ($g->imagen)
-                                        <img src="{{ asset('storage/' . $g->imagen) }}" alt="{{ $g->nombre }}" loading="lazy"
-                                            class="w-10 h-10 object-cover rounded-lg border border-gray-100 flex-shrink-0">
-                                    @else
-                                        <div
-                                            class="w-10 h-10 bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center text-gray-300 flex-shrink-0">
-                                            <i class="fa-solid {{ $t['icon'] }} text-sm"></i>
-                                        </div>
-                                    @endif
-                                    <div class="min-w-0">
-                                        <p class="font-medium text-gray-900 truncate max-w-[16rem]">{{ $g->nombre }}</p>
-                                        <p class="text-xs text-gray-400 truncate">{{ $g->marca ?: 'Sin marca' }}</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="py-3 px-4">
-                                <span
-                                    class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ring-1 ring-inset {{ $t['badge'] }}">
-                                    <i class="fa-solid {{ $t['icon'] }} text-[10px]"></i>
-                                    {{ $t['label'] }}
-                                </span>
-                            </td>
-                            <td class="py-3 px-4">
-                                @if ($kw !== null || $kva !== null)
-                                    <p class="font-medium text-gray-900">{{ $kw !== null ? $kw . ' kW' : '—' }}</p>
-                                    @if ($kva !== null)
-                                        <p class="text-xs text-gray-400">{{ $kva }} kVA</p>
-                                    @endif
-                                @else
-                                    <span class="text-gray-300">—</span>
-                                @endif
-                            </td>
-                            <td class="py-3 px-4">
-                                @if ($esGen && ($g->fases || $g->combustible))
-                                    <div class="flex flex-wrap gap-1">
-                                        @if ($g->fases)
-                                            <span class="px-2 py-0.5 rounded-md bg-gray-100 text-xs text-gray-600">{{ $fasesLbl[$g->fases] ?? ucfirst($g->fases) }}</span>
-                                        @endif
-                                        @if ($g->combustible)
-                                            <span class="px-2 py-0.5 rounded-md bg-gray-100 text-xs text-gray-600">{{ $combLbl[$g->combustible] ?? ucfirst($g->combustible) }}</span>
-                                        @endif
-                                    </div>
-                                @else
-                                    <span class="text-gray-300">—</span>
-                                @endif
-                            </td>
-                            <td class="py-3 px-4 font-medium text-gray-900 tabular-nums">{{ $dinero($g->precio) }}</td>
-                            <td class="py-3 px-4">
-                                <span
-                                    class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium {{ $g->activo ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500' }}">
-                                    <span
-                                        class="w-1.5 h-1.5 rounded-full {{ $g->activo ? 'bg-emerald-500' : 'bg-gray-400' }}"></span>
-                                    {{ $g->activo ? 'Activo' : 'Inactivo' }}
-                                </span>
-                            </td>
-                            <td class="py-3 px-4 text-right whitespace-nowrap">
-                                <button wire:click="editar({{ $g->id }})" type="button" title="Editar"
-                                    aria-label="Editar {{ $g->nombre }}"
-                                    class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors">
-                                    <i class="fa-solid fa-pen-to-square"></i>
-                                </button>
-                                <button
-                                    wire:click="$dispatch('confirmar-eliminar', { id: {{ $g->id }}, nombre: @js($g->nombre) })"
-                                    type="button" title="Eliminar" aria-label="Eliminar {{ $g->nombre }}"
-                                    class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    @empty
+        {{-- ================= Tabla (escritorio ≥ lg) ================= --}}
+        <div class="hidden lg:block bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-2xs">
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm text-left">
+                    <thead
+                        class="text-xs uppercase tracking-wider text-gray-400 font-medium border-b border-gray-100 bg-gray-50/50">
                         <tr>
-                            <td colspan="7" class="py-16 text-center">
-                                <div
-                                    class="mx-auto mb-3 w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-                                    <i class="fa-solid {{ $search !== '' ? 'fa-magnifying-glass' : 'fa-box-open' }}"></i>
-                                </div>
-                                <p class="text-sm font-medium text-gray-900">
-                                    {{ $search !== '' ? 'Sin resultados' : 'Aún no hay equipos' }}</p>
-                                <p class="text-sm text-gray-500 mt-1">
-                                    {{ $search !== '' ? 'No encontramos coincidencias para «' . $search . '». Prueba con otro término.' : 'Agrega tu primer generador o batería para empezar.' }}
-                                </p>
-                                @if ($search === '')
-                                    <button wire:click="crear" type="button"
-                                        class="mt-4 inline-flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-medium px-4 py-2 rounded-lg text-sm transition-all">
-                                        <i class="fa-solid fa-plus text-xs"></i> Agregar equipo
-                                    </button>
-                                @endif
-                            </td>
+                            <th scope="col" class="py-3.5 px-4">Equipo</th>
+                            <th scope="col" class="py-3.5 px-4">Tipo</th>
+                            <th scope="col" class="py-3.5 px-4">Capacidad</th>
+                            <th scope="col" class="py-3.5 px-4">Características</th>
+                            <th scope="col" class="py-3.5 px-4">Precio</th>
+                            <th scope="col" class="py-3.5 px-4">Estado</th>
+                            <th scope="col" class="py-3.5 px-4 text-right"><span class="sr-only">Acciones</span></th>
                         </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50 text-gray-600">
+                        @forelse ($generadores as $g)
+                            @php
+                                $tipoKey = $g->tipo ?? 'generador';
+                                $t       = $tipos[$tipoKey] ?? $tipos['generador'];
+                                $esGen   = $tipoKey === 'generador';
+                                $kw      = $num($g->capacidad_kw);
+                                $kva     = $num($g->capacidad_kva);
+                            @endphp
+                            <tr class="hover:bg-gray-50/50 transition-colors" wire:key="gen-{{ $g->id }}">
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        @if ($g->imagen)
+                                            <img src="{{ asset('storage/' . $g->imagen) }}" alt="{{ $g->nombre }}" loading="lazy"
+                                                class="w-10 h-10 object-cover rounded-lg border border-gray-100 flex-shrink-0">
+                                        @else
+                                            <div
+                                                class="w-10 h-10 bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center text-gray-300 flex-shrink-0">
+                                                <i class="fa-solid {{ $t['icon'] }} text-sm"></i>
+                                            </div>
+                                        @endif
+                                        <div class="min-w-0">
+                                            <p class="font-medium text-gray-900 truncate max-w-[16rem]">{{ $g->nombre }}</p>
+                                            <p class="text-xs text-gray-400 truncate">{{ $g->marca ?: 'Sin marca' }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap {{ $t['badge'] }}">
+                                        <i class="fa-solid {{ $t['icon'] }} text-[10px]"></i>
+                                        {{ $t['label'] }}
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 whitespace-nowrap">
+                                    @if ($kw !== null || $kva !== null)
+                                        <p class="font-medium text-gray-900">{{ $kw !== null ? $kw . ' kW' : '—' }}</p>
+                                        @if ($kva !== null)
+                                            <p class="text-xs text-gray-400">{{ $kva }} kVA</p>
+                                        @endif
+                                    @else
+                                        <span class="text-gray-300">—</span>
+                                    @endif
+                                </td>
+                                <td class="py-3 px-4">
+                                    @if ($esGen && ($g->fases || $g->combustible))
+                                        <div class="flex flex-wrap gap-1">
+                                            @if ($g->fases)
+                                                <span class="px-2 py-0.5 rounded-md bg-gray-100 text-xs text-gray-600">{{ $fasesLbl[$g->fases] ?? ucfirst($g->fases) }}</span>
+                                            @endif
+                                            @if ($g->combustible)
+                                                <span class="px-2 py-0.5 rounded-md bg-gray-100 text-xs text-gray-600">{{ $combLbl[$g->combustible] ?? ucfirst($g->combustible) }}</span>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <span class="text-gray-300">—</span>
+                                    @endif
+                                </td>
+                                <td class="py-3 px-4 font-medium text-gray-900 tabular-nums whitespace-nowrap">{{ $dinero($g->precio) }}</td>
+                                <td class="py-3 px-4">
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium {{ $g->activo ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500' }}">
+                                        <span
+                                            class="w-1.5 h-1.5 rounded-full {{ $g->activo ? 'bg-emerald-500' : 'bg-gray-400' }}"></span>
+                                        {{ $g->activo ? 'Activo' : 'Inactivo' }}
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 text-right whitespace-nowrap">
+                                    <button wire:click="editar({{ $g->id }})" type="button" title="Editar"
+                                        aria-label="Editar {{ $g->nombre }}"
+                                        class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                    <button
+                                        wire:click="$dispatch('confirmar-eliminar', { id: {{ $g->id }}, nombre: @js($g->nombre) })"
+                                        type="button" title="Eliminar" aria-label="Eliminar {{ $g->nombre }}"
+                                        class="w-8 h-8 inline-flex items-center justify-center rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="py-16 text-center">
+                                    <div
+                                        class="mx-auto mb-3 w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+                                        <i class="fa-solid {{ $search !== '' ? 'fa-magnifying-glass' : 'fa-box-open' }}"></i>
+                                    </div>
+                                    <p class="text-sm font-medium text-gray-900">
+                                        {{ $search !== '' ? 'Sin resultados' : 'Aún no hay equipos' }}</p>
+                                    <p class="text-sm text-gray-500 mt-1">
+                                        {{ $search !== '' ? 'No encontramos coincidencias para «' . $search . '». Prueba con otro término.' : 'Agrega tu primer generador o batería para empezar.' }}
+                                    </p>
+                                    @if ($search === '')
+                                        <button wire:click="crear" type="button"
+                                            class="mt-4 inline-flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-medium px-4 py-2 rounded-lg text-sm transition-all">
+                                            <i class="fa-solid fa-plus text-xs"></i> Agregar equipo
+                                        </button>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:hidden">
+        {{-- ================= Tarjetas (móvil y tablet < lg) ================= --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 lg:hidden">
             @forelse ($generadores as $g)
                 @php
                     $tipoKey = $g->tipo ?? 'generador';
@@ -186,7 +192,7 @@
                     $kw      = $num($g->capacidad_kw);
                     $kva     = $num($g->capacidad_kva);
                 @endphp
-                <div class="bg-white border border-gray-100 rounded-2xl p-4 space-y-3 shadow-2xs"
+                <div class="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col gap-3 shadow-2xs min-w-0"
                     wire:key="gen-mobile-{{ $g->id }}">
                     <div class="flex items-start justify-between gap-3">
                         <div class="flex items-center gap-3 min-w-0">
@@ -200,7 +206,7 @@
                                 </div>
                             @endif
                             <div class="min-w-0">
-                                <h3 class="font-medium text-gray-900 text-sm leading-snug truncate">{{ $g->nombre }}</h3>
+                                <h3 class="font-medium text-gray-900 text-sm leading-snug line-clamp-2 break-words">{{ $g->nombre }}</h3>
                                 <p class="text-xs text-gray-400 mt-0.5 truncate">{{ $g->marca ?: 'Sin marca' }}</p>
                             </div>
                         </div>
@@ -226,30 +232,30 @@
                     </div>
 
                     <div class="grid grid-cols-3 gap-2 py-2 border-y border-gray-50 text-xs">
-                        <div>
+                        <div class="min-w-0">
                             <span class="text-gray-400 block">kW</span>
-                            <span class="font-medium text-gray-800">{{ $kw ?? '—' }}</span>
+                            <span class="font-medium text-gray-800 truncate block">{{ $kw ?? '—' }}</span>
                         </div>
-                        <div>
+                        <div class="min-w-0">
                             <span class="text-gray-400 block">kVA</span>
-                            <span class="font-medium text-gray-800">{{ $kva ?? '—' }}</span>
+                            <span class="font-medium text-gray-800 truncate block">{{ $kva ?? '—' }}</span>
                         </div>
-                        <div>
+                        <div class="min-w-0">
                             <span class="text-gray-400 block">Precio</span>
-                            <span class="font-medium text-gray-800 tabular-nums">{{ $dinero($g->precio) }}</span>
+                            <span class="font-medium text-gray-800 tabular-nums truncate block">{{ $dinero($g->precio) }}</span>
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-end gap-1 pt-1">
+                    <div class="flex items-center justify-end gap-1 mt-auto">
                         <button wire:click="editar({{ $g->id }})" type="button" title="Editar"
                             aria-label="Editar {{ $g->nombre }}"
-                            class="w-9 h-9 inline-flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors">
+                            class="w-10 h-10 inline-flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors">
                             <i class="fa-solid fa-pen-to-square"></i>
                         </button>
                         <button
                             wire:click="$dispatch('confirmar-eliminar', { id: {{ $g->id }}, nombre: @js($g->nombre) })"
                             type="button" title="Eliminar" aria-label="Eliminar {{ $g->nombre }}"
-                            class="w-9 h-9 inline-flex items-center justify-center rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors">
+                            class="w-10 h-10 inline-flex items-center justify-center rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
@@ -265,12 +271,18 @@
                     <p class="text-sm text-gray-500 mt-1 px-4">
                         {{ $search !== '' ? 'Prueba con otro término de búsqueda.' : 'Agrega tu primer generador o batería para empezar.' }}
                     </p>
+                    @if ($search === '')
+                        <button wire:click="crear" type="button"
+                            class="mt-4 inline-flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-medium px-4 py-2.5 rounded-lg text-sm transition-all">
+                            <i class="fa-solid fa-plus text-xs"></i> Agregar equipo
+                        </button>
+                    @endif
                 </div>
             @endforelse
         </div>
 
         @if ($generadores->hasPages())
-            <div class="mt-4">
+            <div class="mt-4 overflow-x-auto">
                 {{ $generadores->links() }}
             </div>
         @endif
@@ -280,13 +292,13 @@
     @if ($modalForm)
         <div x-data="{ tipo: $wire.entangle('tipo') }" x-init="$nextTick(() => $refs.nombre?.focus())"
             @keydown.escape.window="$wire.cerrarModal()"
-            class="fixed inset-0 bg-gray-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto"
+            class="fixed inset-0 bg-gray-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center z-50 p-0 sm:p-6"
             wire:click.self="cerrarModal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
             <div
-                class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden my-auto border border-gray-100 flex flex-col max-h-[90vh]">
+                class="bg-white shadow-2xl w-full sm:max-w-3xl overflow-hidden border border-gray-100 flex flex-col rounded-t-2xl sm:rounded-2xl max-h-[95dvh] sm:max-h-[90dvh]">
                 <div
-                    class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 flex-shrink-0">
-                    <div>
+                    class="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-gray-100 flex items-center justify-between gap-3 bg-gray-50/50 flex-shrink-0">
+                    <div class="min-w-0">
                         <h2 id="modal-titulo" class="text-base font-semibold text-gray-900">
                             {{ $equipoId ? 'Editar equipo' : 'Nuevo equipo' }}</h2>
                         <p class="text-xs text-gray-500 mt-0.5"
@@ -295,29 +307,29 @@
                         </p>
                     </div>
                     <button wire:click="cerrarModal" type="button" aria-label="Cerrar"
-                        class="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-200/60 transition-colors">
+                        class="text-gray-400 hover:text-gray-600 w-9 h-9 flex items-center justify-center flex-shrink-0 rounded-full hover:bg-gray-200/60 transition-colors">
                         <i class="fa-solid fa-xmark text-base"></i>
                     </button>
                 </div>
 
-                <form wire:submit="guardar" class="flex flex-col flex-1 overflow-hidden" novalidate>
-                    <div class="p-6 overflow-y-auto space-y-6 flex-1">
+                <form wire:submit="guardar" class="flex flex-col flex-1 min-h-0 overflow-hidden" novalidate>
+                    <div class="p-4 sm:p-6 overflow-y-auto overscroll-contain space-y-5 sm:space-y-6 flex-1">
                         <fieldset>
                             <legend class="{{ $lbl }}">Tipo de equipo <span class="text-red-500" aria-hidden="true">*</span></legend>
-                            <div class="grid grid-cols-2 gap-3">
+                            <div class="grid grid-cols-2 gap-2 sm:gap-3">
                                 @foreach ($tipos as $clave => $t)
                                     <label class="cursor-pointer" wire:key="tipo-{{ $clave }}">
                                         <input type="radio" name="tipo" value="{{ $clave }}" x-model="tipo"
                                             class="peer sr-only">
                                         <div
-                                            class="flex items-center gap-3 rounded-xl border border-gray-200 p-3 transition-all hover:border-gray-300 peer-checked:border-gray-900 peer-checked:bg-gray-50 peer-checked:ring-1 peer-checked:ring-gray-900 peer-focus-visible:ring-2 peer-focus-visible:ring-gray-900 peer-focus-visible:ring-offset-2">
+                                            class="h-full flex flex-col items-start sm:flex-row sm:items-center gap-2 sm:gap-3 rounded-xl border border-gray-200 p-2.5 sm:p-3 transition-all hover:border-gray-300 peer-checked:border-gray-900 peer-checked:bg-gray-50 peer-checked:ring-1 peer-checked:ring-gray-900 peer-focus-visible:ring-2 peer-focus-visible:ring-gray-900 peer-focus-visible:ring-offset-2">
                                             <span
-                                                class="w-9 h-9 rounded-lg flex items-center justify-center ring-1 ring-inset {{ $t['badge'] }}">
+                                                class="w-9 h-9 flex-shrink-0 rounded-lg flex items-center justify-center ring-1 ring-inset {{ $t['badge'] }}">
                                                 <i class="fa-solid {{ $t['icon'] }} text-sm"></i>
                                             </span>
-                                            <span>
+                                            <span class="min-w-0">
                                                 <span class="block text-sm font-medium text-gray-900">{{ $t['label'] }}</span>
-                                                <span class="block text-xs text-gray-500">
+                                                <span class="block text-xs text-gray-500 leading-snug">
                                                     {{ $clave === 'generador' ? 'Plantas eléctricas' : 'Almacenamiento de energía' }}
                                                 </span>
                                             </span>
@@ -332,8 +344,8 @@
 
                         <section aria-labelledby="sec-general" class="space-y-3">
                             <h3 id="sec-general" class="{{ $sec }}">Información general</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <div class="md:col-span-2">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div class="sm:col-span-2">
                                     <label for="nombre" class="{{ $lbl }}">Nombre <span class="text-red-500" aria-hidden="true">*</span></label>
                                     <input id="nombre" x-ref="nombre" type="text" wire:model="nombre"
                                         :placeholder="tipo === 'bateria' ? 'Ej. Batería de litio 48V 100Ah' : 'Ej. Generador 10kVA - Gasolina'"
@@ -359,13 +371,13 @@
                             </div>
                         </section>
 
-                        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6">
 
-                            <div class="md:col-span-7 space-y-6">
+                            <div class="md:col-span-7 space-y-5 sm:space-y-6">
                                 <section aria-labelledby="sec-specs" class="space-y-3">
                                     <h3 id="sec-specs" class="{{ $sec }}">Especificaciones técnicas</h3>
 
-                                    <div class="grid grid-cols-2 gap-3">
+                                    <div class="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3">
                                         <div>
                                             <label for="capacidad_kva" class="{{ $lbl }}">Capacidad kVA <span class="text-gray-400 font-normal">(opcional)</span></label>
                                             <div class="relative">
@@ -430,7 +442,7 @@
                                         </div>
 
                                         <p x-show="tipo === 'bateria'" x-cloak
-                                            class="col-span-2 flex items-start gap-2 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-700">
+                                            class="col-span-full flex items-start gap-2 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-700">
                                             <i class="fa-solid fa-circle-info mt-0.5"></i>
                                             Las baterías no requieren fases ni combustible.
                                         </p>
@@ -439,7 +451,7 @@
 
                                 <section aria-labelledby="sec-precio" class="space-y-3">
                                     <h3 id="sec-precio" class="{{ $sec }}">Precio</h3>
-                                    <div class="max-w-[12rem]">
+                                    <div class="w-full min-[420px]:max-w-[12rem]">
                                         <label for="precio" class="{{ $lbl }}">Precio de venta <span class="text-gray-400 font-normal">(opcional)</span></label>
                                         <div class="relative">
                                             <span class="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 text-sm">$</span>
@@ -455,7 +467,7 @@
                                 </section>
                             </div>
 
-                            <div class="md:col-span-5 space-y-6">
+                            <div class="md:col-span-5 space-y-5 sm:space-y-6 min-w-0">
                                 <section aria-labelledby="sec-imagen" class="space-y-3">
                                     <h3 id="sec-imagen" class="{{ $sec }}">Fotografía</h3>
                                     <div>
@@ -498,7 +510,7 @@
                                             }
                                         }">
                                             <div x-ref="dz"
-                                                class="dropzone border border-dashed border-gray-200 hover:border-gray-300 rounded-xl bg-gray-50/30 text-xs p-2 min-h-[140px] flex items-center justify-center transition-colors">
+                                                class="dropzone border border-dashed border-gray-200 hover:border-gray-300 rounded-xl bg-gray-50/30 text-xs p-2 min-h-[120px] sm:min-h-[140px] flex items-center justify-center transition-colors">
                                             </div>
                                         </div>
                                         <p class="text-xs text-gray-400 mt-1.5">JPG, PNG o WebP · máximo 2 MB.</p>
@@ -545,7 +557,7 @@
                         <section aria-labelledby="sec-desc" class="space-y-3">
                             <h3 id="sec-desc" class="{{ $sec }}">Descripción <span class="normal-case tracking-normal font-normal">(opcional)</span></h3>
 
-                            <div wire:ignore x-data="{
+                            <div wire:ignore class="max-w-full overflow-x-auto" x-data="{
                                 init() {
                                     const wire = this.$wire;
 
@@ -582,17 +594,17 @@
                     </div>
 
                     <div
-                        class="flex items-center gap-2.5 px-6 py-3.5 border-t border-gray-100 bg-gray-50/50 flex-shrink-0">
+                        class="flex items-center gap-2.5 px-4 sm:px-6 py-3 sm:py-3.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-gray-100 bg-gray-50/50 flex-shrink-0">
                         <p class="hidden sm:block mr-auto text-xs text-gray-400">
                             <span class="text-red-500">*</span> Campo obligatorio
                         </p>
                         <div class="flex w-full sm:w-auto flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2.5">
                             <button type="button" wire:click="cerrarModal"
-                                class="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-100 transition-colors">
+                                class="px-4 py-2.5 sm:py-2 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-100 transition-colors">
                                 Cancelar
                             </button>
                             <button type="submit" wire:loading.attr="disabled" wire:target="guardar,imagen"
-                                class="inline-flex items-center justify-center gap-2 px-5 py-2 rounded-lg bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                                class="inline-flex items-center justify-center gap-2 px-5 py-2.5 sm:py-2 rounded-lg bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                                 <svg wire:loading.inline-block wire:target="guardar" class="animate-spin w-4 h-4" fill="none"
                                     viewBox="0 0 24 24" aria-hidden="true">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -638,7 +650,7 @@
 
                 Swal.fire({
                     title: '¿Eliminar equipo?',
-                    html: `Se eliminará <strong class="text-gray-900">${nombre}</strong> junto con su imagen.<br>Esta acción no se puede deshacer.`,
+                    html: `Se eliminará <strong class="text-gray-900 break-words">${nombre}</strong> junto con su imagen.<br>Esta acción no se puede deshacer.`,
                     icon: 'warning',
                     iconColor: '#dc2626',
                     showCancelButton: true,
@@ -649,14 +661,14 @@
                     buttonsStyling: false,
                     showLoaderOnConfirm: true,
                     allowOutsideClick: () => !Swal.isLoading(),
-                    width: '26rem',
+                    width: 'min(26rem, calc(100vw - 1.5rem))',
                     customClass: {
-                        popup: '!rounded-2xl !border !border-gray-100 !shadow-2xl !p-6',
+                        popup: '!rounded-2xl !border !border-gray-100 !shadow-2xl !p-5 sm:!p-6',
                         title: '!text-base !font-semibold !text-gray-900 !p-0 !mt-2',
                         htmlContainer: '!text-sm !text-gray-500 !leading-relaxed !mt-2',
                         actions: '!gap-2 !mt-5 !w-full !justify-end',
-                        confirmButton: 'px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-colors',
-                        cancelButton: 'px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium transition-colors',
+                        confirmButton: 'px-4 py-2.5 sm:py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-colors',
+                        cancelButton: 'px-4 py-2.5 sm:py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium transition-colors',
                     },
                     preConfirm: async () => {
                         await $wire.eliminar(id);

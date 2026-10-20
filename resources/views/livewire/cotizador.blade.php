@@ -131,29 +131,7 @@
                 <p class="text-sm text-gray-500">Marque los equipos que se conectarán y ajuste la cantidad de cada uno.</p>
             </div>
 
-            {{-- Buscador para añadir equipos que no estén en el catálogo del entorno --}}
-            <div class="relative mb-4">
-                <div class="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <input type="text" wire:model.live.debounce.300ms="busquedaEquipo" placeholder="Buscar equipo..."
-                        class="w-full text-sm outline-none placeholder-gray-400">
-                </div>
-
-                @if ($this->sugerenciasBusqueda->isNotEmpty())
-                    <div class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-                        @foreach ($this->sugerenciasBusqueda as $sugerencia)
-                            <button type="button" wire:click="agregarEquipo({{ $sugerencia->id }})"
-                                class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left hover:bg-blue-50">
-                                <span class="text-lg">{{ $sugerencia->icono }}</span>
-                                <span class="text-gray-700">{{ $sugerencia->nombre }}</span>
-                                <span class="ml-auto text-xs text-gray-400">{{ $sugerencia->potencia_nominal_w }}W</span>
-                            </button>
-                        @endforeach
-                    </div>
-                @endif
-            </div>
+            
 
             {{-- Lista de equipos --}}
             <div class="border border-gray-100 rounded-lg divide-y divide-gray-100 max-h-96 overflow-y-auto">

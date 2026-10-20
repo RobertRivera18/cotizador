@@ -28,11 +28,21 @@ class GeneradorConfiguradorSeeder extends Seeder
         // potencia_arranque_w solo aplica a equipos con motor (es_motor = true)
         $equipos = [
             ['nombre' => 'Refrigeradora', 'icono' => '🧊', 'potencia_nominal_w' => 150, 'potencia_arranque_w' => 450, 'es_motor' => true],
+
+            // Aires acondicionados (arranque ≈ 3x la potencia nominal)
             ['nombre' => 'Aire Acond. 12k BTU', 'icono' => '❄️', 'potencia_nominal_w' => 1200, 'potencia_arranque_w' => 3600, 'es_motor' => true],
+            ['nombre' => 'Aire Acond. 18k BTU', 'icono' => '❄️', 'potencia_nominal_w' => 1800, 'potencia_arranque_w' => 5400, 'es_motor' => true],
+            ['nombre' => 'Aire Acond. 24k BTU', 'icono' => '❄️', 'potencia_nominal_w' => 2400, 'potencia_arranque_w' => 7200, 'es_motor' => true],
+            ['nombre' => 'Aire Acond. 36k BTU', 'icono' => '❄️', 'potencia_nominal_w' => 3600, 'potencia_arranque_w' => 10800, 'es_motor' => true],
+
             ['nombre' => 'Luces LED', 'icono' => '💡', 'potencia_nominal_w' => 10, 'potencia_arranque_w' => null, 'es_motor' => false],
             ['nombre' => 'TV', 'icono' => '📺', 'potencia_nominal_w' => 120, 'potencia_arranque_w' => null, 'es_motor' => false],
             ['nombre' => 'Lavadora', 'icono' => '🧺', 'potencia_nominal_w' => 500, 'potencia_arranque_w' => 1500, 'es_motor' => true],
+
+            // Bombas de agua
             ['nombre' => 'Bomba de Agua', 'icono' => '🚰', 'potencia_nominal_w' => 750, 'potencia_arranque_w' => 2200, 'es_motor' => true],
+            ['nombre' => 'Bomba de Agua Residencial', 'icono' => '💧', 'potencia_nominal_w' => 400, 'potencia_arranque_w' => 1200, 'es_motor' => true],
+
             ['nombre' => 'Microondas', 'icono' => '🍽️', 'potencia_nominal_w' => 1100, 'potencia_arranque_w' => null, 'es_motor' => false],
             ['nombre' => 'Computadora', 'icono' => '💻', 'potencia_nominal_w' => 300, 'potencia_arranque_w' => null, 'es_motor' => false],
             ['nombre' => 'Cafetera', 'icono' => '☕', 'potencia_nominal_w' => 900, 'potencia_arranque_w' => null, 'es_motor' => false],
@@ -51,42 +61,59 @@ class GeneradorConfiguradorSeeder extends Seeder
 
         // ---------- CATÁLOGO DEFAULT POR ENTORNO ----------
         // [nombre_equipo => [cantidad_defecto, seleccionado_defecto, orden]]
+        // Los aires de 18k, 24k y 36k BTU están disponibles en todos los entornos (cantidad 0, sin seleccionar).
         $catalogoPorEntorno = [
             'residencial' => [
                 'Refrigeradora' => [1, true, 1],
                 'Aire Acond. 12k BTU' => [0, false, 2],
-                'Luces LED' => [10, true, 3],
-                'TV' => [1, false, 4],
-                'Lavadora' => [0, false, 5],
-                'Microondas' => [0, false, 6],
-                'Computadora' => [0, false, 7],
-                'Router / Módem' => [1, true, 8],
+                'Aire Acond. 18k BTU' => [0, false, 3],
+                'Aire Acond. 24k BTU' => [0, false, 4],
+                'Aire Acond. 36k BTU' => [0, false, 5],
+                'Luces LED' => [10, true, 6],
+                'TV' => [1, false, 7],
+                'Lavadora' => [0, false, 8],
+                'Microondas' => [0, false, 9],
+                'Computadora' => [0, false, 10],
+                'Router / Módem' => [1, true, 11],
+                'Bomba de Agua Residencial' => [0, false, 12],
             ],
             'comercial' => [
                 'Luces LED' => [20, true, 1],
                 'Aire Acond. 12k BTU' => [2, true, 2],
-                'Computadora' => [4, true, 3],
-                'Refrigeradora' => [1, true, 4],
-                'Cafetera' => [1, false, 5],
-                'Router / Módem' => [2, true, 6],
+                'Aire Acond. 18k BTU' => [0, false, 3],
+                'Aire Acond. 24k BTU' => [0, false, 4],
+                'Aire Acond. 36k BTU' => [0, false, 5],
+                'Computadora' => [4, true, 6],
+                'Refrigeradora' => [1, true, 7],
+                'Cafetera' => [1, false, 8],
+                'Router / Módem' => [2, true, 9],
             ],
             'industrial' => [
                 'Herramienta Eléctrica' => [3, true, 1],
                 'Bomba de Agua' => [1, true, 2],
                 'Luces LED' => [30, true, 3],
                 'Ventilador' => [4, false, 4],
+                'Aire Acond. 18k BTU' => [0, false, 5],
+                'Aire Acond. 24k BTU' => [0, false, 6],
+                'Aire Acond. 36k BTU' => [0, false, 7],
             ],
             'eventos' => [
                 'Luces LED' => [40, true, 1],
                 'Ventilador' => [4, false, 2],
                 'Cocina de Inducción' => [1, false, 3],
                 'Cargador de Celular' => [10, false, 4],
+                'Aire Acond. 18k BTU' => [0, false, 5],
+                'Aire Acond. 24k BTU' => [0, false, 6],
+                'Aire Acond. 36k BTU' => [0, false, 7],
             ],
             'campamento' => [
                 'Luces LED' => [6, true, 1],
                 'Congelador' => [1, false, 2],
                 'Bomba de Agua' => [1, true, 3],
                 'Cargador de Celular' => [4, true, 4],
+                'Aire Acond. 18k BTU' => [0, false, 5],
+                'Aire Acond. 24k BTU' => [0, false, 6],
+                'Aire Acond. 36k BTU' => [0, false, 7],
             ],
         ];
 
@@ -103,22 +130,6 @@ class GeneradorConfiguradorSeeder extends Seeder
             }
 
             $entorno->equipos()->sync($sync);
-        }
-
-        // ---------- GENERADORES ----------
-        $generadores = [
-            ['nombre' => 'Generador 5kVA - Gasolina', 'capacidad_kva' => 5, 'capacidad_kw' => 4, 'combustible' => 'gasolina', 'precio' => 650],
-            ['nombre' => 'Generador 8kVA - Gasolina', 'capacidad_kva' => 8, 'capacidad_kw' => 6.4, 'combustible' => 'gasolina', 'precio' => 950],
-            ['nombre' => 'Generador 10kVA - Gasolina', 'capacidad_kva' => 10, 'capacidad_kw' => 8, 'combustible' => 'gasolina', 'precio' => 1250],
-            ['nombre' => 'Generador 10kVA - Diésel', 'capacidad_kva' => 10, 'capacidad_kw' => 8, 'combustible' => 'diesel', 'precio' => 1650],
-            ['nombre' => 'Generador 15kVA - Diésel', 'capacidad_kva' => 15, 'capacidad_kw' => 12, 'combustible' => 'diesel', 'precio' => 2450],
-            ['nombre' => 'Generador 20kVA - Diésel', 'capacidad_kva' => 20, 'capacidad_kw' => 16, 'combustible' => 'diesel', 'precio' => 3200],
-            ['nombre' => 'Generador 12kVA - Gas', 'capacidad_kva' => 12, 'capacidad_kw' => 9.6, 'combustible' => 'gas', 'precio' => 2100],
-            ['nombre' => 'Generador 30kVA - Diésel', 'capacidad_kva' => 30, 'capacidad_kw' => 24, 'combustible' => 'diesel', 'precio' => 4800],
-        ];
-
-        foreach ($generadores as $data) {
-            Generador::updateOrCreate(['nombre' => $data['nombre']], $data);
         }
     }
 }
