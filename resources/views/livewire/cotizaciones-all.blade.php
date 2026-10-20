@@ -318,7 +318,19 @@
                         <p class="text-sm font-bold text-gray-900 break-words">{{ $c->equipo->nombre }}</p>
                         <p class="text-xs text-gray-500 mt-0.5">{{ $c->equipo->capacidad_kva }} kVA · {{
                             $c->equipo->capacidad_kw }} kW</p>
-                        <p class="text-sm font-bold text-blue-700 mt-2">{{ $c->equipo->precio !== null ? '$' .
+
+                        <dl class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-blue-100 text-xs">
+                            <div class="min-w-0">
+                                <dt class="text-[10px] font-semibold uppercase tracking-wide text-blue-500">Marca</dt>
+                                <dd class="font-medium text-gray-900 break-words">{{ $c->equipo->marca ?: '—' }}</dd>
+                            </div>
+                            <div class="min-w-0">
+                                <dt class="text-[10px] font-semibold uppercase tracking-wide text-blue-500">Fases</dt>
+                                <dd class="font-medium text-gray-900 break-words">{{ $c->equipo->fases ?: '—' }}</dd>
+                            </div>
+                        </dl>
+
+                        <p class="text-sm font-bold text-blue-700 mt-3">{{ $c->equipo->precio !== null ? '$' .
                             number_format($c->equipo->precio, 2) : 'Consultar' }}</p>
                         @else
                         <p class="text-xs text-gray-500 italic">Consulta general sin modelo preseleccionado.</p>
